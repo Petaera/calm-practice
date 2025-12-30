@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-therapy.png";
 
 const Hero = () => {
+  const navigate = useNavigate();
   const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
@@ -22,7 +24,7 @@ const Hero = () => {
             <div className="flex flex-col sm:flex-row gap-4">
               <Button 
                 size="lg"
-                onClick={() => scrollToSection("signup")}
+                onClick={() => navigate("/login")}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg"
               >
                 Get Started
