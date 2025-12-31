@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,15 +6,61 @@ import { Clock, Plus, Filter, Calendar as CalendarIcon, User, AlertCircle, MoreV
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useTasks, useCompleteTask, useTaskCountByStatus } from "@/hooks";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Tasks = () => {
-  const tasks = [
-    { id: 1, text: "Review intake form for New Client", client: "Sarah J.", due: "Today", priority: "High", category: "Clinical", completed: false },
-    { id: 2, text: "Draft session report for C-1026", client: "Michael R.", due: "Today", priority: "High", category: "Admin", completed: false },
-    { id: 3, text: "Score GAD-7 Assessment", client: "Emily K.", due: "Tomorrow", priority: "Medium", category: "Assessment", completed: false },
-    { id: 4, text: "Send follow-up email regarding sleep diary", client: "David L.", due: "Oct 26", priority: "Medium", category: "Follow-up", completed: false },
-    { id: 5, text: "Submit monthly summary for side-hustle", client: "N/A", due: "Oct 31", priority: "Low", category: "Admin", completed: false },
-  ];
+  const { therapist } = useAuth();
+  const { data: tasksData, isLoading, refetch } = useTasks(
+    therapist?.id,
+    {
+      pagination: { page: 1, pageSize: 20 },
+      filters: {
+        status: "pending",
+      },
+      sort: { column: "due_date", ascending: true },
+    }
+  );
+
+  const { data: taskCounts } = useTaskCountByStatus(therapist?.id);
+  const { mutate: completeTask } = useCompleteTask();
+
+  const handleToggleTask = async (taskId: string, currentStatus: string) => {
+    if (currentStatus === "completed") {
+      // You might want to implement "uncomplete" logic
+      return;
+    }
+    
+    await completeTask(taskId);
+    refetch();
+  };
+
+  const formatDueDate = (dueDateStr: string | null) => {
+    if (!dueDateStr) return "No due date";
+    
+    const dueDate = new Date(dueDateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    dueDate.setHours(0, 0, 0, 0);
+    
+    const diffDays = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Tomorrow";
+    if (diffDays === -1) return "Yesterday";
+    if (diffDays < 0) return `${Math.abs(diffDays)} days overdue`;
+    if (diffDays < 7) return `In ${diffDays} days`;
+    
+    return dueDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  const getPriorityColor = (priority: string | null) => {
+    switch (priority) {
+      case 'High': case 'Urgent': return 'bg-destructive';
+      case 'Medium': return 'bg-sky-500';
+      default: return 'bg-sage';
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -32,8 +79,12 @@ const Tasks = () => {
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between border-b border-border/30 pb-4">
             <div className="flex gap-6">
-              <button className="text-sm font-bold text-primary border-b-2 border-primary pb-4 -mb-[18px]">ACTIVE TASKS</button>
-              <button className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors pb-4 -mb-[18px]">COMPLETED</button>
+              <button className="text-sm font-bold text-primary border-b-2 border-primary pb-4 -mb-[18px]">
+                ACTIVE TASKS ({taskCounts?.pending || 0})
+              </button>
+              <button className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors pb-4 -mb-[18px]">
+                COMPLETED ({taskCounts?.completed || 0})
+              </button>
             </div>
             <div className="flex gap-2">
               <Button variant="ghost" size="sm" className="h-8 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:bg-muted">
@@ -42,54 +93,85 @@ const Tasks = () => {
             </div>
           </div>
 
-          <div className="space-y-3 pt-2">
-            {tasks.map((task) => (
-              <Card key={task.id} className={cn(
-                "border-none shadow-sm transition-all hover:translate-x-1 group overflow-hidden relative",
-                task.completed ? "opacity-60 bg-muted/30" : "bg-card border border-border/50"
-              )}>
-                <div className={cn(
-                  "absolute left-0 top-0 bottom-0 w-1",
-                  task.priority === 'High' ? "bg-destructive" : 
-                  task.priority === 'Medium' ? "bg-sky-500" : "bg-sage"
-                )} />
-                <CardContent className="p-4 flex items-center gap-4">
-                  <Checkbox 
-                    id={`task-${task.id}`} 
-                    checked={task.completed} 
-                    className="w-5 h-5 rounded-md border-border/50 data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-colors" 
-                  />
-                  <div className="flex-1 min-w-0">
-                    <label 
-                      htmlFor={`task-${task.id}`} 
-                      className={cn(
-                        "font-semibold text-foreground cursor-pointer block truncate text-sm transition-all group-hover:text-primary",
-                        task.completed && "line-through text-muted-foreground"
-                      )}
-                    >
-                      {task.text}
-                    </label>
-                    <div className="flex items-center gap-4 mt-1">
-                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                        <User className="w-3 h-3 text-primary" /> {task.client}
+          {isLoading ? (
+            <div className="space-y-3 pt-2">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="border-none shadow-sm">
+                  <CardContent className="p-4">
+                    <div className="animate-pulse flex gap-4">
+                      <div className="w-5 h-5 rounded bg-muted" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-muted rounded w-3/4" />
+                        <div className="h-3 bg-muted rounded w-1/2" />
                       </div>
-                      <div className="flex items-center gap-1.5 text-[10px] font-black text-primary uppercase tracking-widest">
-                        <Clock className="w-3 h-3" /> {task.due}
-                      </div>
-                      <Badge variant="secondary" className="bg-muted text-[9px] font-black uppercase border-none h-4 px-1.5">
-                        {task.category}
-                      </Badge>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                      <MoreVertical className="w-4 h-4 text-muted-foreground" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : tasksData?.data && tasksData.data.length > 0 ? (
+            <div className="space-y-3 pt-2">
+              {tasksData.data.map((task) => (
+                <Card key={task.id} className={cn(
+                  "border-none shadow-sm transition-all hover:translate-x-1 group overflow-hidden relative",
+                  task.status === 'completed' ? "opacity-60 bg-muted/30" : "bg-card border border-border/50"
+                )}>
+                  <div className={cn(
+                    "absolute left-0 top-0 bottom-0 w-1",
+                    getPriorityColor(task.priority)
+                  )} />
+                  <CardContent className="p-4 flex items-center gap-4">
+                    <Checkbox 
+                      id={`task-${task.id}`} 
+                      checked={task.status === 'completed'} 
+                      onCheckedChange={() => handleToggleTask(task.id, task.status || 'pending')}
+                      className="w-5 h-5 rounded-md border-border/50 data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-colors" 
+                    />
+                    <div className="flex-1 min-w-0">
+                      <label 
+                        htmlFor={`task-${task.id}`} 
+                        className={cn(
+                          "font-semibold text-foreground cursor-pointer block truncate text-sm transition-all group-hover:text-primary",
+                          task.status === 'completed' && "line-through text-muted-foreground"
+                        )}
+                      >
+                        {task.title}
+                      </label>
+                      <div className="flex items-center gap-4 mt-1">
+                        {task.clients && (
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                            <User className="w-3 h-3 text-primary" /> {task.clients.full_name}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1.5 text-[10px] font-black text-primary uppercase tracking-widest">
+                          <Clock className="w-3 h-3" /> {formatDueDate(task.due_date)}
+                        </div>
+                        {task.category && (
+                          <Badge variant="secondary" className="bg-muted text-[9px] font-black uppercase border-none h-4 px-1.5">
+                            {task.category}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                        <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="border-none shadow-sm">
+              <CardContent className="p-12 text-center">
+                <p className="text-muted-foreground">No active tasks</p>
+                <Button className="mt-4">
+                  <Plus className="w-4 h-4 mr-2" /> Add Your First Task
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <div className="space-y-6">
@@ -105,19 +187,9 @@ const Tasks = () => {
                 The following clients haven't been seen in over <span className="text-destructive font-bold underline decoration-2 text-balance">14 days</span>.
               </p>
               <div className="space-y-2">
-                {[
-                  { name: 'Michael Ross', days: 18 },
-                  { name: 'David Lowen', days: 24 },
-                  { name: 'Sarah Jenkins', days: 15 }
-                ].map(item => (
-                  <div key={item.name} className="flex justify-between items-center p-3 bg-white border border-border/30 rounded-xl hover:shadow-sm transition-all group cursor-pointer">
-                    <div>
-                      <span className="text-xs font-bold text-foreground block group-hover:text-primary">{item.name}</span>
-                      <span className="text-[10px] text-muted-foreground">{item.days} days since last session</span>
-                    </div>
-                    <Button variant="ghost" size="sm" className="h-7 text-[10px] font-black text-primary hover:bg-primary/5 uppercase">Contact</Button>
-                  </div>
-                ))}
+                <div className="text-center text-sm text-muted-foreground py-4">
+                  All clients are up to date
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -138,7 +210,7 @@ const Tasks = () => {
                 {Array.from({ length: 31 }).map((_, i) => (
                   <div key={i} className={cn(
                     "aspect-square flex items-center justify-center text-[10px] font-bold rounded-lg cursor-pointer transition-all",
-                    i + 1 === 24 ? "bg-primary text-white shadow-sm shadow-primary/30" : "hover:bg-muted text-foreground"
+                    i + 1 === new Date().getDate() ? "bg-primary text-white shadow-sm shadow-primary/30" : "hover:bg-muted text-foreground"
                   )}>
                     {i + 1}
                   </div>
@@ -146,7 +218,9 @@ const Tasks = () => {
               </div>
               <div className="mt-6 p-4 rounded-xl bg-sage-light/20 border border-sage-light/30">
                 <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">Today's Load</p>
-                <p className="text-sm font-semibold text-foreground italic">"6 sessions scheduled today. Take 5-minute breaks between sessions."</p>
+                <p className="text-sm font-semibold text-foreground italic">
+                  "{taskCounts?.pending || 0} tasks pending. Stay focused!"
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -157,4 +231,3 @@ const Tasks = () => {
 };
 
 export default Tasks;
-

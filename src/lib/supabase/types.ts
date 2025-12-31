@@ -1,0 +1,1202 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
+export type Database = {
+  public: {
+    Tables: {
+      activity_feed: {
+        Row: {
+          activity_type: string;
+          created_at: string | null;
+          description: string | null;
+          icon: string | null;
+          id: string;
+          is_important: boolean | null;
+          is_read: boolean | null;
+          read_at: string | null;
+          related_entity_id: string | null;
+          related_entity_type: string | null;
+          therapist_id: string;
+          title: string;
+        };
+        Insert: {
+          activity_type: string;
+          created_at?: string | null;
+          description?: string | null;
+          icon?: string | null;
+          id?: string;
+          is_important?: boolean | null;
+          is_read?: boolean | null;
+          read_at?: string | null;
+          related_entity_id?: string | null;
+          related_entity_type?: string | null;
+          therapist_id: string;
+          title: string;
+        };
+        Update: {
+          activity_type?: string;
+          created_at?: string | null;
+          description?: string | null;
+          icon?: string | null;
+          id?: string;
+          is_important?: boolean | null;
+          is_read?: boolean | null;
+          read_at?: string | null;
+          related_entity_id?: string | null;
+          related_entity_type?: string | null;
+          therapist_id?: string;
+          title?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "activity_feed_therapist_id_fkey";
+            columns: ["therapist_id"];
+            isOneToOne: false;
+            referencedRelation: "therapists";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      appointments: {
+        Row: {
+          appointment_date: string;
+          appointment_type: string | null;
+          cancellation_reason: string | null;
+          cancelled_at: string | null;
+          cancelled_by: string | null;
+          client_id: string | null;
+          created_at: string | null;
+          duration_minutes: number;
+          end_time: string;
+          id: string;
+          location: string | null;
+          meeting_link: string | null;
+          mode: string | null;
+          notes: string | null;
+          reminder_sent: boolean | null;
+          reminder_sent_at: string | null;
+          session_id: string | null;
+          start_time: string;
+          status: string | null;
+          therapist_id: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          appointment_date: string;
+          appointment_type?: string | null;
+          cancellation_reason?: string | null;
+          cancelled_at?: string | null;
+          cancelled_by?: string | null;
+          client_id?: string | null;
+          created_at?: string | null;
+          duration_minutes: number;
+          end_time: string;
+          id?: string;
+          location?: string | null;
+          meeting_link?: string | null;
+          mode?: string | null;
+          notes?: string | null;
+          reminder_sent?: boolean | null;
+          reminder_sent_at?: string | null;
+          session_id?: string | null;
+          start_time: string;
+          status?: string | null;
+          therapist_id: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          appointment_date?: string;
+          appointment_type?: string | null;
+          cancellation_reason?: string | null;
+          cancelled_at?: string | null;
+          cancelled_by?: string | null;
+          client_id?: string | null;
+          created_at?: string | null;
+          duration_minutes?: number;
+          end_time?: string;
+          id?: string;
+          location?: string | null;
+          meeting_link?: string | null;
+          mode?: string | null;
+          notes?: string | null;
+          reminder_sent?: boolean | null;
+          reminder_sent_at?: string | null;
+          session_id?: string | null;
+          start_time?: string;
+          status?: string | null;
+          therapist_id?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "appointments_client_id_fkey";
+            columns: ["client_id"];
+            isOneToOne: false;
+            referencedRelation: "clients";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "appointments_session_id_fkey";
+            columns: ["session_id"];
+            isOneToOne: false;
+            referencedRelation: "sessions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "appointments_therapist_id_fkey";
+            columns: ["therapist_id"];
+            isOneToOne: false;
+            referencedRelation: "therapists";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      assessments: {
+        Row: {
+          allow_multiple_submissions: boolean | null;
+          category: string | null;
+          created_at: string | null;
+          description: string | null;
+          id: string;
+          is_active: boolean | null;
+          share_token: string | null;
+          show_scores_to_client: boolean | null;
+          therapist_id: string;
+          title: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          allow_multiple_submissions?: boolean | null;
+          category?: string | null;
+          created_at?: string | null;
+          description?: string | null;
+          id?: string;
+          is_active?: boolean | null;
+          share_token?: string | null;
+          show_scores_to_client?: boolean | null;
+          therapist_id: string;
+          title: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          allow_multiple_submissions?: boolean | null;
+          category?: string | null;
+          created_at?: string | null;
+          description?: string | null;
+          id?: string;
+          is_active?: boolean | null;
+          share_token?: string | null;
+          show_scores_to_client?: boolean | null;
+          therapist_id?: string;
+          title?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "assessments_therapist_id_fkey";
+            columns: ["therapist_id"];
+            isOneToOne: false;
+            referencedRelation: "therapists";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      questions: {
+        Row: {
+          id: string;
+          therapist_id: string | null;
+          question_text: string;
+          question_type: string;
+          options: Json | null;
+          validation_rules: Json | null;
+          placeholder_text: string | null;
+          help_text: string | null;
+          is_global: boolean | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          therapist_id?: string | null;
+          question_text: string;
+          question_type: string;
+          options?: Json | null;
+          validation_rules?: Json | null;
+          placeholder_text?: string | null;
+          help_text?: string | null;
+          is_global?: boolean | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          therapist_id?: string | null;
+          question_text?: string;
+          question_type?: string;
+          options?: Json | null;
+          validation_rules?: Json | null;
+          placeholder_text?: string | null;
+          help_text?: string | null;
+          is_global?: boolean | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "questions_therapist_id_fkey";
+            columns: ["therapist_id"];
+            isOneToOne: false;
+            referencedRelation: "therapists";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      assessment_questions: {
+        Row: {
+          id: string;
+          assessment_id: string;
+          question_id: string;
+          question_order: number;
+          is_required: boolean | null;
+          points: number | null;
+          override_question_text: string | null;
+          override_options: Json | null;
+          override_help_text: string | null;
+          section_name: string | null;
+          conditional_logic: Json | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          assessment_id: string;
+          question_id: string;
+          question_order: number;
+          is_required?: boolean | null;
+          points?: number | null;
+          override_question_text?: string | null;
+          override_options?: Json | null;
+          override_help_text?: string | null;
+          section_name?: string | null;
+          conditional_logic?: Json | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          assessment_id?: string;
+          question_id?: string;
+          question_order?: number;
+          is_required?: boolean | null;
+          points?: number | null;
+          override_question_text?: string | null;
+          override_options?: Json | null;
+          override_help_text?: string | null;
+          section_name?: string | null;
+          conditional_logic?: Json | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "assessment_questions_assessment_id_fkey";
+            columns: ["assessment_id"];
+            isOneToOne: false;
+            referencedRelation: "assessments";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "assessment_questions_question_id_fkey";
+            columns: ["question_id"];
+            isOneToOne: false;
+            referencedRelation: "questions";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      assessment_submissions: {
+        Row: {
+          id: string;
+          assessment_id: string;
+          client_id: string;
+          therapist_id: string;
+          session_id: string | null;
+          submitted_at: string | null;
+          completion_time_seconds: number | null;
+          raw_score: number | null;
+          calculated_score: number | null;
+          score_interpretation: string | null;
+          notes: string | null;
+          status: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          assessment_id: string;
+          client_id: string;
+          therapist_id: string;
+          session_id?: string | null;
+          submitted_at?: string | null;
+          completion_time_seconds?: number | null;
+          raw_score?: number | null;
+          calculated_score?: number | null;
+          score_interpretation?: string | null;
+          notes?: string | null;
+          status?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          assessment_id?: string;
+          client_id?: string;
+          therapist_id?: string;
+          session_id?: string | null;
+          submitted_at?: string | null;
+          completion_time_seconds?: number | null;
+          raw_score?: number | null;
+          calculated_score?: number | null;
+          score_interpretation?: string | null;
+          notes?: string | null;
+          status?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "assessment_submissions_assessment_id_fkey";
+            columns: ["assessment_id"];
+            isOneToOne: false;
+            referencedRelation: "assessments";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "assessment_submissions_client_id_fkey";
+            columns: ["client_id"];
+            isOneToOne: false;
+            referencedRelation: "clients";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "assessment_submissions_therapist_id_fkey";
+            columns: ["therapist_id"];
+            isOneToOne: false;
+            referencedRelation: "therapists";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "assessment_submissions_session_id_fkey";
+            columns: ["session_id"];
+            isOneToOne: false;
+            referencedRelation: "sessions";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      assessment_responses: {
+        Row: {
+          id: string;
+          submission_id: string;
+          assessment_question_id: string;
+          question_id: string;
+          response_value: string | null;
+          response_values: string[] | null;
+          numeric_value: number | null;
+          points_earned: number | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          submission_id: string;
+          assessment_question_id: string;
+          question_id: string;
+          response_value?: string | null;
+          response_values?: string[] | null;
+          numeric_value?: number | null;
+          points_earned?: number | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          submission_id?: string;
+          assessment_question_id?: string;
+          question_id?: string;
+          response_value?: string | null;
+          response_values?: string[] | null;
+          numeric_value?: number | null;
+          points_earned?: number | null;
+          created_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "assessment_responses_submission_id_fkey";
+            columns: ["submission_id"];
+            isOneToOne: false;
+            referencedRelation: "assessment_submissions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "assessment_responses_assessment_question_id_fkey";
+            columns: ["assessment_question_id"];
+            isOneToOne: false;
+            referencedRelation: "assessment_questions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "assessment_responses_question_id_fkey";
+            columns: ["question_id"];
+            isOneToOne: false;
+            referencedRelation: "questions";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      assessment_assignments: {
+        Row: {
+          id: string;
+          assessment_id: string;
+          client_id: string;
+          therapist_id: string;
+          assigned_at: string | null;
+          due_date: string | null;
+          completed_at: string | null;
+          submission_id: string | null;
+          status: string | null;
+          reminder_sent: boolean | null;
+          reminder_sent_at: string | null;
+          notes: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          assessment_id: string;
+          client_id: string;
+          therapist_id: string;
+          assigned_at?: string | null;
+          due_date?: string | null;
+          completed_at?: string | null;
+          submission_id?: string | null;
+          status?: string | null;
+          reminder_sent?: boolean | null;
+          reminder_sent_at?: string | null;
+          notes?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          assessment_id?: string;
+          client_id?: string;
+          therapist_id?: string;
+          assigned_at?: string | null;
+          due_date?: string | null;
+          completed_at?: string | null;
+          submission_id?: string | null;
+          status?: string | null;
+          reminder_sent?: boolean | null;
+          reminder_sent_at?: string | null;
+          notes?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "assessment_assignments_assessment_id_fkey";
+            columns: ["assessment_id"];
+            isOneToOne: false;
+            referencedRelation: "assessments";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "assessment_assignments_client_id_fkey";
+            columns: ["client_id"];
+            isOneToOne: false;
+            referencedRelation: "clients";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "assessment_assignments_therapist_id_fkey";
+            columns: ["therapist_id"];
+            isOneToOne: false;
+            referencedRelation: "therapists";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "assessment_assignments_submission_id_fkey";
+            columns: ["submission_id"];
+            isOneToOne: false;
+            referencedRelation: "assessment_submissions";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      clients: {
+        Row: {
+          address: string | null;
+          age: number | null;
+          client_id: string;
+          concerns: string[] | null;
+          created_at: string | null;
+          date_of_birth: string | null;
+          email: string | null;
+          emergency_contact_name: string | null;
+          emergency_contact_phone: string | null;
+          emergency_contact_relationship: string | null;
+          full_name: string;
+          gender: string | null;
+          id: string;
+          intake_date: string | null;
+          intake_notes: string | null;
+          phone: string | null;
+          status: string | null;
+          therapist_id: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          address?: string | null;
+          age?: number | null;
+          client_id: string;
+          concerns?: string[] | null;
+          created_at?: string | null;
+          date_of_birth?: string | null;
+          email?: string | null;
+          emergency_contact_name?: string | null;
+          emergency_contact_phone?: string | null;
+          emergency_contact_relationship?: string | null;
+          full_name: string;
+          gender?: string | null;
+          id?: string;
+          intake_date?: string | null;
+          intake_notes?: string | null;
+          phone?: string | null;
+          status?: string | null;
+          therapist_id: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          address?: string | null;
+          age?: number | null;
+          client_id?: string;
+          concerns?: string[] | null;
+          created_at?: string | null;
+          date_of_birth?: string | null;
+          email?: string | null;
+          emergency_contact_name?: string | null;
+          emergency_contact_phone?: string | null;
+          emergency_contact_relationship?: string | null;
+          full_name?: string;
+          gender?: string | null;
+          id?: string;
+          intake_date?: string | null;
+          intake_notes?: string | null;
+          phone?: string | null;
+          status?: string | null;
+          therapist_id?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "clients_therapist_id_fkey";
+            columns: ["therapist_id"];
+            isOneToOne: false;
+            referencedRelation: "therapists";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      notes: {
+        Row: {
+          client_id: string | null;
+          content: string;
+          created_at: string | null;
+          id: string;
+          is_archived: boolean | null;
+          is_important: boolean | null;
+          note_type: string | null;
+          session_id: string | null;
+          tags: string[] | null;
+          therapist_id: string;
+          title: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          client_id?: string | null;
+          content: string;
+          created_at?: string | null;
+          id?: string;
+          is_archived?: boolean | null;
+          is_important?: boolean | null;
+          note_type?: string | null;
+          session_id?: string | null;
+          tags?: string[] | null;
+          therapist_id: string;
+          title: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          client_id?: string | null;
+          content?: string;
+          created_at?: string | null;
+          id?: string;
+          is_archived?: boolean | null;
+          is_important?: boolean | null;
+          note_type?: string | null;
+          session_id?: string | null;
+          tags?: string[] | null;
+          therapist_id?: string;
+          title?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notes_client_id_fkey";
+            columns: ["client_id"];
+            isOneToOne: false;
+            referencedRelation: "clients";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notes_session_id_fkey";
+            columns: ["session_id"];
+            isOneToOne: false;
+            referencedRelation: "sessions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notes_therapist_id_fkey";
+            columns: ["therapist_id"];
+            isOneToOne: false;
+            referencedRelation: "therapists";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      sessions: {
+        Row: {
+          client_id: string;
+          created_at: string | null;
+          duration_minutes: number | null;
+          id: string;
+          location: string | null;
+          meeting_link: string | null;
+          payment_amount: number | null;
+          payment_status: string | null;
+          session_date: string;
+          session_id: string;
+          session_notes: string | null;
+          session_purpose: string | null;
+          session_time: string;
+          session_type: string | null;
+          status: string | null;
+          therapist_id: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          client_id: string;
+          created_at?: string | null;
+          duration_minutes?: number | null;
+          id?: string;
+          location?: string | null;
+          meeting_link?: string | null;
+          payment_amount?: number | null;
+          payment_status?: string | null;
+          session_date: string;
+          session_id: string;
+          session_notes?: string | null;
+          session_purpose?: string | null;
+          session_time: string;
+          session_type?: string | null;
+          status?: string | null;
+          therapist_id: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          client_id?: string;
+          created_at?: string | null;
+          duration_minutes?: number | null;
+          id?: string;
+          location?: string | null;
+          meeting_link?: string | null;
+          payment_amount?: number | null;
+          payment_status?: string | null;
+          session_date?: string;
+          session_id?: string;
+          session_notes?: string | null;
+          session_purpose?: string | null;
+          session_time?: string;
+          session_type?: string | null;
+          status?: string | null;
+          therapist_id?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "sessions_client_id_fkey";
+            columns: ["client_id"];
+            isOneToOne: false;
+            referencedRelation: "clients";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sessions_therapist_id_fkey";
+            columns: ["therapist_id"];
+            isOneToOne: false;
+            referencedRelation: "therapists";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      tasks: {
+        Row: {
+          category: string | null;
+          client_id: string | null;
+          completed_at: string | null;
+          created_at: string | null;
+          description: string | null;
+          due_date: string | null;
+          due_time: string | null;
+          id: string;
+          is_recurring: boolean | null;
+          priority: string | null;
+          recurrence_pattern: Json | null;
+          reminder_at: string | null;
+          session_id: string | null;
+          status: string | null;
+          therapist_id: string;
+          title: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          category?: string | null;
+          client_id?: string | null;
+          completed_at?: string | null;
+          created_at?: string | null;
+          description?: string | null;
+          due_date?: string | null;
+          due_time?: string | null;
+          id?: string;
+          is_recurring?: boolean | null;
+          priority?: string | null;
+          recurrence_pattern?: Json | null;
+          reminder_at?: string | null;
+          session_id?: string | null;
+          status?: string | null;
+          therapist_id: string;
+          title: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          category?: string | null;
+          client_id?: string | null;
+          completed_at?: string | null;
+          created_at?: string | null;
+          description?: string | null;
+          due_date?: string | null;
+          due_time?: string | null;
+          id?: string;
+          is_recurring?: boolean | null;
+          priority?: string | null;
+          recurrence_pattern?: Json | null;
+          reminder_at?: string | null;
+          session_id?: string | null;
+          status?: string | null;
+          therapist_id?: string;
+          title?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "tasks_client_id_fkey";
+            columns: ["client_id"];
+            isOneToOne: false;
+            referencedRelation: "clients";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "tasks_session_id_fkey";
+            columns: ["session_id"];
+            isOneToOne: false;
+            referencedRelation: "sessions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "tasks_therapist_id_fkey";
+            columns: ["therapist_id"];
+            isOneToOne: false;
+            referencedRelation: "therapists";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      therapists: {
+        Row: {
+          created_at: string | null;
+          email: string;
+          full_name: string;
+          id: string;
+          license_number: string | null;
+          password_hash: string | null;
+          phone: string | null;
+          practice_name: string | null;
+          specialization: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          email: string;
+          full_name: string;
+          id?: string;
+          license_number?: string | null;
+          password_hash?: string | null;
+          phone?: string | null;
+          practice_name?: string | null;
+          specialization?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          email?: string;
+          full_name?: string;
+          id?: string;
+          license_number?: string | null;
+          password_hash?: string | null;
+          phone?: string | null;
+          practice_name?: string | null;
+          specialization?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      therapist_settings: {
+        Row: {
+          appointment_reminders: boolean | null;
+          auto_logout: boolean | null;
+          calendar_view: string | null;
+          cancellation_policy: string | null;
+          created_at: string | null;
+          currency: string | null;
+          custom_settings: Json | null;
+          dashboard_widgets: Json | null;
+          date_format: string | null;
+          default_session_duration: number | null;
+          default_session_fee: number | null;
+          email_notifications: boolean | null;
+          id: string;
+          language: string | null;
+          late_cancellation_hours: number | null;
+          payment_reminders: boolean | null;
+          reminder_hours_before: number | null;
+          require_2fa: boolean | null;
+          session_buffer_minutes: number | null;
+          session_timeout_minutes: number | null;
+          sidebar_collapsed: boolean | null;
+          sms_notifications: boolean | null;
+          task_due_reminders: boolean | null;
+          theme: string | null;
+          therapist_id: string;
+          time_format: string | null;
+          timezone: string | null;
+          updated_at: string | null;
+          working_hours_end: string | null;
+          working_hours_start: string | null;
+        };
+        Insert: {
+          appointment_reminders?: boolean | null;
+          auto_logout?: boolean | null;
+          calendar_view?: string | null;
+          cancellation_policy?: string | null;
+          created_at?: string | null;
+          currency?: string | null;
+          custom_settings?: Json | null;
+          dashboard_widgets?: Json | null;
+          date_format?: string | null;
+          default_session_duration?: number | null;
+          default_session_fee?: number | null;
+          email_notifications?: boolean | null;
+          id?: string;
+          language?: string | null;
+          late_cancellation_hours?: number | null;
+          payment_reminders?: boolean | null;
+          reminder_hours_before?: number | null;
+          require_2fa?: boolean | null;
+          session_buffer_minutes?: number | null;
+          session_timeout_minutes?: number | null;
+          sidebar_collapsed?: boolean | null;
+          sms_notifications?: boolean | null;
+          task_due_reminders?: boolean | null;
+          theme?: string | null;
+          therapist_id: string;
+          time_format?: string | null;
+          timezone?: string | null;
+          updated_at?: string | null;
+          working_hours_end?: string | null;
+          working_hours_start?: string | null;
+        };
+        Update: {
+          appointment_reminders?: boolean | null;
+          auto_logout?: boolean | null;
+          calendar_view?: string | null;
+          cancellation_policy?: string | null;
+          created_at?: string | null;
+          currency?: string | null;
+          custom_settings?: Json | null;
+          dashboard_widgets?: Json | null;
+          date_format?: string | null;
+          default_session_duration?: number | null;
+          default_session_fee?: number | null;
+          email_notifications?: boolean | null;
+          id?: string;
+          language?: string | null;
+          late_cancellation_hours?: number | null;
+          payment_reminders?: boolean | null;
+          reminder_hours_before?: number | null;
+          require_2fa?: boolean | null;
+          session_buffer_minutes?: number | null;
+          session_timeout_minutes?: number | null;
+          sidebar_collapsed?: boolean | null;
+          sms_notifications?: boolean | null;
+          task_due_reminders?: boolean | null;
+          theme?: string | null;
+          therapist_id?: string;
+          time_format?: string | null;
+          timezone?: string | null;
+          updated_at?: string | null;
+          working_hours_end?: string | null;
+          working_hours_start?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "therapist_settings_therapist_id_fkey";
+            columns: ["therapist_id"];
+            isOneToOne: true;
+            referencedRelation: "therapists";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      notifications: {
+        Row: {
+          created_at: string | null;
+          email_sent_at: string | null;
+          id: string;
+          is_read: boolean | null;
+          link_to: string | null;
+          message: string;
+          notification_type: string;
+          priority: string | null;
+          read_at: string | null;
+          related_id: string | null;
+          send_email: boolean | null;
+          therapist_id: string;
+          title: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          email_sent_at?: string | null;
+          id?: string;
+          is_read?: boolean | null;
+          link_to?: string | null;
+          message: string;
+          notification_type: string;
+          priority?: string | null;
+          read_at?: string | null;
+          related_id?: string | null;
+          send_email?: boolean | null;
+          therapist_id: string;
+          title: string;
+        };
+        Update: {
+          created_at?: string | null;
+          email_sent_at?: string | null;
+          id?: string;
+          is_read?: boolean | null;
+          link_to?: string | null;
+          message?: string;
+          notification_type?: string;
+          priority?: string | null;
+          read_at?: string | null;
+          related_id?: string | null;
+          send_email?: boolean | null;
+          therapist_id?: string;
+          title?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notifications_therapist_id_fkey";
+            columns: ["therapist_id"];
+            isOneToOne: false;
+            referencedRelation: "therapists";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
+  };
+};
+
+// Helper types for easier usage
+export type Tables<T extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][T]["Row"];
+export type TablesInsert<T extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][T]["Insert"];
+export type TablesUpdate<T extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][T]["Update"];
+
+// Domain-specific type aliases for convenience
+export type Therapist = Tables<"therapists">;
+export type TherapistInsert = TablesInsert<"therapists">;
+export type TherapistUpdate = TablesUpdate<"therapists">;
+
+export type Client = Tables<"clients">;
+export type ClientInsert = TablesInsert<"clients">;
+export type ClientUpdate = TablesUpdate<"clients">;
+
+export type Session = Tables<"sessions">;
+export type SessionInsert = TablesInsert<"sessions">;
+export type SessionUpdate = TablesUpdate<"sessions">;
+
+export type Task = Tables<"tasks">;
+export type TaskInsert = TablesInsert<"tasks">;
+export type TaskUpdate = TablesUpdate<"tasks">;
+
+export type Note = Tables<"notes">;
+export type NoteInsert = TablesInsert<"notes">;
+export type NoteUpdate = TablesUpdate<"notes">;
+
+export type Appointment = Tables<"appointments">;
+export type AppointmentInsert = TablesInsert<"appointments">;
+export type AppointmentUpdate = TablesUpdate<"appointments">;
+
+export type Assessment = Tables<"assessments">;
+export type AssessmentInsert = TablesInsert<"assessments">;
+export type AssessmentUpdate = TablesUpdate<"assessments">;
+
+export type Question = Tables<"questions">;
+export type QuestionInsert = TablesInsert<"questions">;
+export type QuestionUpdate = TablesUpdate<"questions">;
+
+export type AssessmentQuestion = Tables<"assessment_questions">;
+export type AssessmentQuestionInsert = TablesInsert<"assessment_questions">;
+export type AssessmentQuestionUpdate = TablesUpdate<"assessment_questions">;
+
+export type AssessmentSubmission = Tables<"assessment_submissions">;
+export type AssessmentSubmissionInsert = TablesInsert<"assessment_submissions">;
+export type AssessmentSubmissionUpdate = TablesUpdate<"assessment_submissions">;
+
+export type AssessmentResponse = Tables<"assessment_responses">;
+export type AssessmentResponseInsert = TablesInsert<"assessment_responses">;
+export type AssessmentResponseUpdate = TablesUpdate<"assessment_responses">;
+
+export type AssessmentAssignment = Tables<"assessment_assignments">;
+export type AssessmentAssignmentInsert = TablesInsert<"assessment_assignments">;
+export type AssessmentAssignmentUpdate = TablesUpdate<"assessment_assignments">;
+
+export type TherapistSettings = Tables<"therapist_settings">;
+export type TherapistSettingsInsert = TablesInsert<"therapist_settings">;
+export type TherapistSettingsUpdate = TablesUpdate<"therapist_settings">;
+
+export type Notification = Tables<"notifications">;
+export type NotificationInsert = TablesInsert<"notifications">;
+export type NotificationUpdate = TablesUpdate<"notifications">;
+
+export type ActivityFeed = Tables<"activity_feed">;
+export type ActivityFeedInsert = TablesInsert<"activity_feed">;
+export type ActivityFeedUpdate = TablesUpdate<"activity_feed">;
+
+// Enum types for type safety
+export type ClientStatus = "Active" | "On-hold" | "Closed" | "Inactive";
+export type SessionStatus = "Scheduled" | "Upcoming" | "Completed" | "Cancelled" | "No-show";
+export type SessionType = "In-person" | "Online" | "Phone";
+export type PaymentStatus = "Paid" | "Pending" | "Unpaid" | "Insurance";
+export type TaskStatus = "pending" | "in_progress" | "completed" | "cancelled";
+export type TaskPriority = "Low" | "Medium" | "High" | "Urgent";
+export type TaskCategory = "Clinical" | "Admin" | "Assessment" | "Follow-up" | "Documentation" | "Other";
+export type NoteType = "general" | "clinical" | "observation" | "resource";
+export type AppointmentType = "therapy_session" | "intake" | "assessment" | "consultation" | "follow_up" | "emergency";
+export type AppointmentMode = "in-person" | "online" | "phone";
+export type AppointmentStatus = "scheduled" | "confirmed" | "rescheduled" | "cancelled" | "no_show" | "completed";
+export type NotificationType = "appointment_reminder" | "task_due" | "payment_overdue" | "session_cancelled" | "new_message" | "system" | "custom";
+export type NotificationPriority = "low" | "normal" | "high" | "urgent";
+
+// Assessment-related enums
+export type QuestionType = "multiple_choice" | "yes_no" | "text" | "rating";
+export type AssessmentSubmissionStatus = "draft" | "completed" | "reviewed";
+export type AssessmentCategory = "Clinical" | "Stress/Mood" | "Personal" | "Behavioral" | "Other";
+export type AssessmentAssignmentStatus = "pending" | "in_progress" | "completed" | "expired";
+
+// Extended type for assessment with questions (used in queries with joins)
+export interface AssessmentWithQuestions extends Assessment {
+  assessment_questions: (AssessmentQuestion & {
+    questions: Question;
+  })[];
+}
+
+// Extended type for public assessment access
+export interface PublicAssessmentData {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string | null;
+  allow_multiple_submissions: boolean | null;
+  questions: {
+    id: string;
+    assessment_question_id: string;
+    question_text: string;
+    question_type: string;
+    options: Json | null;
+    help_text: string | null;
+    is_required: boolean | null;
+    question_order: number;
+  }[];
+}
+
+// Type for question options (used in multiple choice/rating questions)
+export interface QuestionOption {
+  label: string;
+  value: string;
+  points?: number;
+}
+
+// Type for rating scale configuration
+export interface RatingScaleConfig {
+  min: number;
+  max: number;
+  minLabel?: string;
+  maxLabel?: string;
+}
+
+// Extended type for assignment with client info
+export interface AssessmentAssignmentWithClient extends AssessmentAssignment {
+  clients: {
+    id: string;
+    full_name: string;
+    email: string | null;
+  };
+}
+
+// Extended type for assessment with counts and assignments
+export interface AssessmentWithCounts extends Assessment {
+  question_count: number;
+  submission_count: number;
+  assignment_count: number;
+}
+

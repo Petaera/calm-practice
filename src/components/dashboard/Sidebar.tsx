@@ -1,6 +1,8 @@
 import { LucideIcon, LayoutDashboard, Users, Calendar, ClipboardCheck, StickyNote, CreditCard, CheckSquare, BarChart3, Settings, LogOut } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface NavItemProps {
   icon: LucideIcon;
@@ -26,6 +28,9 @@ const NavItem = ({ icon: Icon, label, href, active }: NavItemProps) => (
 
 const Sidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { signOut, therapist } = useAuth();
+  const { toast } = useToast();
   
   const menuItems = [
     { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
@@ -38,12 +43,35 @@ const Sidebar = () => {
     { icon: BarChart3, label: "Reports", href: "/dashboard/reports" },
   ];
 
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Signed out",
+        description: "You've been successfully signed out.",
+      });
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <aside className="w-64 border-r border-border bg-card flex flex-col h-screen sticky top-0">
       <div className="p-6">
         <Link to="/" className="font-display text-2xl font-bold text-primary tracking-tight">
-          PracticeMind
+          Calm Practice
         </Link>
+        {therapist && (
+          <p className="text-xs text-muted-foreground mt-2 truncate">
+            {therapist.full_name}
+          </p>
+        )}
       </div>
       
       <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
@@ -63,7 +91,10 @@ const Sidebar = () => {
           href="/dashboard/settings" 
           active={location.pathname === "/dashboard/settings"} 
         />
-        <button className="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-muted-foreground hover:bg-destructive/5 hover:text-destructive transition-all duration-200">
+        <button 
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-muted-foreground hover:bg-destructive/5 hover:text-destructive transition-all duration-200"
+        >
           <LogOut className="w-5 h-5" />
           <span className="font-medium">Logout</span>
         </button>
