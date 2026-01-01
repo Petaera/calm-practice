@@ -12,6 +12,7 @@ import Clients from "./pages/dashboard/Clients";
 import Sessions from "./pages/dashboard/Sessions";
 import Assessments from "./pages/dashboard/Assessments";
 import Notes from "./pages/dashboard/Notes";
+import Resources from "./pages/dashboard/Resources";
 import Finance from "./pages/dashboard/Finance";
 import Tasks from "./pages/dashboard/Tasks";
 import Reports from "./pages/dashboard/Reports";
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/dashboard/sessions" element={<ProtectedRoute><Sessions /></ProtectedRoute>} />
             <Route path="/dashboard/assessments" element={<ProtectedRoute><Assessments /></ProtectedRoute>} />
             <Route path="/dashboard/notes" element={<ProtectedRoute><Notes /></ProtectedRoute>} />
+            <Route path="/dashboard/resources" element={<ProtectedRoute><Resources /></ProtectedRoute>} />
             <Route path="/dashboard/finance" element={<ProtectedRoute><Finance /></ProtectedRoute>} />
             <Route path="/dashboard/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
             <Route path="/dashboard/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />

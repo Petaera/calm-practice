@@ -29,7 +29,7 @@ const Testimonials = () => {
               Trusted by Professionals
             </h2>
             <p className="text-muted-foreground text-lg mb-10">
-              Hear from psychologists and counselors who've simplified their practice with PracticeMind.
+              Hear from psychologists and counselors who've simplified their practice with PractoMind.
             </p>
 
             <div className="space-y-6">

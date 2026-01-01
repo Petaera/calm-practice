@@ -141,10 +141,10 @@ const Login = () => {
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <h1 className="font-display text-3xl md:text-4xl font-semibold text-foreground mb-3">
-              Welcome to Calm Practice
+              Welcome to PractoMind
             </h1>
             <p className="text-muted-foreground text-lg">
-              Your calm workspace for managing your practice
+              Your intelligent workspace for managing your practice
             </p>
           </div>
 

@@ -5,10 +5,10 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="text-center md:text-left">
             <span className="font-display text-xl font-semibold text-foreground">
-              PracticeMind
+              PractoMind
             </span>
             <p className="text-sm text-muted-foreground mt-1">
-              Your calm workspace for practice management.
+              Your intelligent workspace for practice management.
             </p>
           </div>
           
@@ -27,7 +27,7 @@ const Footer = () => {
         
         <div className="mt-8 pt-6 border-t border-border text-center">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} PracticeMind. All rights reserved.
+            © {new Date().getFullYear()} PractoMind. All rights reserved.
           </p>
         </div>
       </div>

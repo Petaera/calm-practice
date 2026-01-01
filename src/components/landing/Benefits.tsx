@@ -43,7 +43,7 @@ const Benefits = () => {
 
           <div className="order-1 lg:order-2">
             <h2 className="font-display text-3xl md:text-4xl font-semibold text-foreground mb-6">
-              Why Psychologists Love PracticeMind
+              Why Psychologists Love PractoMind
             </h2>
             <p className="text-muted-foreground text-lg mb-10">
               Built by people who understand the unique demands of running a private practice.

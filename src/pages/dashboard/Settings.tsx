@@ -39,7 +39,7 @@ const Settings = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Work Email</Label>
-                <Input id="email" defaultValue="sarah.robinson@practicemind.com" className="rounded-xl border-border/50 h-11" />
+                <Input id="email" defaultValue="sarah.robinson@practomind.com" className="rounded-xl border-border/50 h-11" />
               </div>
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl h-11 mt-4">
                 Update Profile
@@ -97,7 +97,7 @@ const Settings = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-xs text-muted-foreground leading-relaxed font-medium">
-                PracticeMind is designed for your private use. No data is shared with external parties. You have full control over your records.
+                PractoMind is designed for your private use. No data is shared with external parties. You have full control over your records.
               </p>
             </CardContent>
           </Card>

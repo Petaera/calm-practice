@@ -7,24 +7,24 @@ import {
 
 const faqs = [
   {
-    question: "Is PracticeMind only for licensed psychologists?",
-    answer: "No! PracticeMind is designed for anyone in the mental health field — licensed psychologists, counselors, therapists, trainees, and interns. If you work with clients, it's built for you.",
+    question: "Is PractoMind only for licensed psychologists?",
+    answer: "No! PractoMind is designed for anyone in the mental health field — licensed psychologists, counselors, therapists, trainees, and interns. If you work with clients, it's built for you.",
   },
   {
-    question: "Can my clients log in to PracticeMind?",
-    answer: "No, PracticeMind is a professional tool for practitioners only. Your clients never need to create accounts or log in. This keeps things simple and ensures your notes remain private.",
+    question: "Can my clients log in to PractoMind?",
+    answer: "No, PractoMind is a professional tool for practitioners only. Your clients never need to create accounts or log in. This keeps things simple and ensures your notes remain private.",
   },
   {
     question: "How is my data protected?",
     answer: "Your data is encrypted and stored securely. You maintain full control over your information, and we never share or sell your data. Privacy is at the core of everything we build.",
   },
   {
-    question: "Can I access PracticeMind on my phone?",
-    answer: "Yes! PracticeMind works beautifully on desktop, tablet, and mobile. Log sessions between appointments or review notes on the go.",
+    question: "Can I access PractoMind on my phone?",
+    answer: "Yes! PractoMind works beautifully on desktop, tablet, and mobile. Log sessions between appointments or review notes on the go.",
   },
   {
     question: "Is there a free trial?",
-    answer: "Absolutely. You can try PracticeMind free and experience how it simplifies your practice before committing.",
+    answer: "Absolutely. You can try PractoMind free and experience how it simplifies your practice before committing.",
   },
   {
     question: "What if I need help getting started?",
@@ -42,7 +42,7 @@ const FAQ = () => {
               Frequently Asked Questions
             </h2>
             <p className="text-muted-foreground text-lg">
-              Everything you need to know about PracticeMind.
+              Everything you need to know about PractoMind.
             </p>
           </div>
 
