@@ -9,6 +9,7 @@ import {
   createClient,
   updateClient,
   archiveClient,
+  unarchiveClient,
   deleteClient,
   getClientCountByStatus,
 } from "@/services/clients.service";
@@ -92,6 +93,17 @@ export function useUpdateClient() {
 export function useArchiveClient() {
   const mutationFn = useCallback((clientId: string) => {
     return archiveClient(clientId);
+  }, []);
+
+  return useSupabaseMutation<Client, string>(mutationFn);
+}
+
+/**
+ * Hook for unarchiving a client
+ */
+export function useUnarchiveClient() {
+  const mutationFn = useCallback((clientId: string) => {
+    return unarchiveClient(clientId);
   }, []);
 
   return useSupabaseMutation<Client, string>(mutationFn);

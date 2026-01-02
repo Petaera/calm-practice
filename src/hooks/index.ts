@@ -16,6 +16,7 @@ export {
   useCreateClient,
   useUpdateClient,
   useArchiveClient,
+  useUnarchiveClient,
   useDeleteClient,
   useClientCountByStatus,
 } from "./use-clients";

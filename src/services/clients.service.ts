@@ -150,6 +150,15 @@ export async function archiveClient(
 }
 
 /**
+ * Unarchive a client (restore by setting status back to Active)
+ */
+export async function unarchiveClient(
+  clientId: string
+): Promise<ApiResponse<Client>> {
+  return updateClient(clientId, { status: "Active" });
+}
+
+/**
  * Permanently delete a client
  */
 export async function deleteClient(

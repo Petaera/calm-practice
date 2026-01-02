@@ -3,7 +3,7 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Search, Filter, MoreVertical, Calendar, Edit, Trash2, Archive } from "lucide-react";
+import { Plus, Search, Filter, MoreVertical, Calendar, Edit, Trash2, Archive, ArchiveRestore } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
@@ -12,6 +12,7 @@ import {
   useCreateClient,
   useUpdateClient,
   useArchiveClient,
+  useUnarchiveClient,
   useDeleteClient,
 } from "@/hooks";
 import { useAuth } from "@/contexts/AuthContext";
@@ -126,6 +127,7 @@ const Clients = () => {
   const createClientMutation = useCreateClient();
   const updateClientMutation = useUpdateClient();
   const archiveClientMutation = useArchiveClient();
+  const unarchiveClientMutation = useUnarchiveClient();
   const deleteClientMutation = useDeleteClient();
 
   // Computed values
@@ -223,6 +225,24 @@ const Clients = () => {
       toast({
         title: "Error",
         description: archiveClientMutation.error.message || "Failed to archive client",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUnarchiveClient = async (client: Client) => {
+    const result = await unarchiveClientMutation.mutate(client.id);
+
+    if (result) {
+      toast({
+        title: "Success",
+        description: `Client ${client.full_name} has been unarchived`,
+      });
+      refetch();
+    } else if (unarchiveClientMutation.error) {
+      toast({
+        title: "Error",
+        description: unarchiveClientMutation.error.message || "Failed to unarchive client",
         variant: "destructive",
       });
     }
@@ -377,6 +397,7 @@ const Clients = () => {
             formatLastSession={formatLastSession}
             onEditClick={handleEditClick}
             onArchiveClick={handleArchiveClient}
+            onUnarchiveClick={handleUnarchiveClient}
             onDeleteClick={handleDeleteClick}
           />
           
@@ -452,6 +473,7 @@ interface ClientListProps {
   formatLastSession: (date: string | null) => string;
   onEditClick: (client: Client) => void;
   onArchiveClick: (client: Client) => void;
+  onUnarchiveClick: (client: Client) => void;
   onDeleteClick: (client: Client) => void;
 }
 
@@ -460,6 +482,7 @@ const ClientList = ({
   formatLastSession,
   onEditClick,
   onArchiveClick,
+  onUnarchiveClick,
   onDeleteClick,
 }: ClientListProps) => (
   <div className="grid gap-4">
@@ -571,7 +594,7 @@ const ClientList = ({
                         <Edit className="w-4 h-4 mr-2" />
                         Edit Client
                       </DropdownMenuItem>
-                      {client.status !== "Closed" && (
+                      {client.status !== "Closed" ? (
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
@@ -581,6 +604,17 @@ const ClientList = ({
                         >
                           <Archive className="w-4 h-4 mr-2" />
                           Archive Client
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onUnarchiveClick(client);
+                          }}
+                          className="cursor-pointer"
+                        >
+                          <ArchiveRestore className="w-4 h-4 mr-2" />
+                          Unarchive Client
                         </DropdownMenuItem>
                       )}
                       <DropdownMenuSeparator />

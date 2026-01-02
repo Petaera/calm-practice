@@ -3,29 +3,89 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Clock, MapPin, Search, Plus, FileText, MoreVertical, Video } from "lucide-react";
+import { Calendar, Clock, MapPin, Search, Plus, FileText, MoreVertical, Video, Edit, Trash2, CheckCircle, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useSessions } from "@/hooks";
+import {
+  useSessions,
+  useCreateSession,
+  useUpdateSession,
+  useDeleteSession,
+  useCompleteSession,
+  useCancelSession,
+  useClients,
+} from "@/hooks";
 import { useAuth } from "@/contexts/AuthContext";
-import type { SessionStatus } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
+import { SessionFormDialog, type SessionFormData } from "@/components/sessions";
+import type { SessionStatus, SessionInsert, SessionUpdate } from "@/lib/supabase";
+import type { SessionWithClient } from "@/services/sessions.service";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+// Utility function to generate session ID
+const generateSessionId = (): string => {
+  const prefix = "SS";
+  const timestamp = Date.now().toString(36).toUpperCase();
+  const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `${prefix}-${timestamp}-${random}`;
+};
 
 const Sessions = () => {
   const { therapist } = useAuth();
+  const { toast } = useToast();
+  
+  // UI State
   const [statusFilter, setStatusFilter] = useState<SessionStatus | undefined>();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedSession, setSelectedSession] = useState<SessionWithClient | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<SessionWithClient | null>(null);
 
-  const { data: sessionsData, isLoading, error } = useSessions(
-    therapist?.id,
-    {
-      pagination: { page: currentPage, pageSize: 10 },
-      filters: {
-        status: statusFilter,
-      },
-      sort: { column: "session_date", ascending: false },
-    }
-  );
+  // Data fetching
+  const {
+    data: sessionsData,
+    isLoading,
+    error,
+    refetch,
+  } = useSessions(therapist?.id, {
+    pagination: { page: currentPage, pageSize: 10 },
+    filters: {
+      status: statusFilter,
+    },
+    sort: { column: "session_date", ascending: false },
+  });
+
+  // Fetch clients for the dropdown
+  const { data: clientsData } = useClients(therapist?.id, {
+    filters: { status: "Active" },
+  });
+
+  // Mutations
+  const createSessionMutation = useCreateSession();
+  const updateSessionMutation = useUpdateSession();
+  const deleteSessionMutation = useDeleteSession();
+  const completeSessionMutation = useCompleteSession();
+  const cancelSessionMutation = useCancelSession();
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -62,6 +122,161 @@ const Sessions = () => {
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
+  // Handlers
+  const handleCreateSession = async (formData: SessionFormData) => {
+    if (!therapist?.id) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create a session",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const sessionData: SessionInsert = {
+      session_id: generateSessionId(),
+      therapist_id: therapist.id,
+      client_id: formData.client_id,
+      session_date: formData.session_date,
+      session_time: formData.session_time,
+      duration_minutes: formData.duration_minutes,
+      session_type: formData.session_type,
+      session_purpose: formData.session_purpose || null,
+      status: formData.status,
+      payment_status: formData.payment_status,
+      payment_amount: formData.payment_amount ? parseFloat(formData.payment_amount) : null,
+      location: formData.location || null,
+      meeting_link: formData.meeting_link || null,
+      session_notes: formData.session_notes || null,
+    };
+
+    const result = await createSessionMutation.mutate(sessionData);
+
+    if (result) {
+      toast({
+        title: "Success",
+        description: "Session has been created successfully",
+      });
+      setIsCreateDialogOpen(false);
+      refetch();
+    } else if (createSessionMutation.error) {
+      toast({
+        title: "Error",
+        description: createSessionMutation.error.message || "Failed to create session",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditClick = (session: SessionWithClient) => {
+    setSelectedSession(session);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateSession = async (formData: SessionFormData) => {
+    if (!selectedSession) return;
+
+    const updates: SessionUpdate = {
+      session_date: formData.session_date,
+      session_time: formData.session_time,
+      duration_minutes: formData.duration_minutes,
+      session_type: formData.session_type,
+      session_purpose: formData.session_purpose || null,
+      status: formData.status,
+      payment_status: formData.payment_status,
+      payment_amount: formData.payment_amount ? parseFloat(formData.payment_amount) : null,
+      location: formData.location || null,
+      meeting_link: formData.meeting_link || null,
+      session_notes: formData.session_notes || null,
+    };
+
+    const result = await updateSessionMutation.mutate({
+      sessionId: selectedSession.id,
+      updates,
+    });
+
+    if (result) {
+      toast({
+        title: "Success",
+        description: "Session has been updated successfully",
+      });
+      setIsEditDialogOpen(false);
+      setSelectedSession(null);
+      refetch();
+    } else if (updateSessionMutation.error) {
+      toast({
+        title: "Error",
+        description: updateSessionMutation.error.message || "Failed to update session",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCompleteSession = async (session: SessionWithClient) => {
+    const result = await completeSessionMutation.mutate({
+      sessionId: session.id,
+    });
+
+    if (result) {
+      toast({
+        title: "Success",
+        description: "Session marked as completed",
+      });
+      refetch();
+    } else if (completeSessionMutation.error) {
+      toast({
+        title: "Error",
+        description: completeSessionMutation.error.message || "Failed to complete session",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCancelSession = async (session: SessionWithClient) => {
+    const result = await cancelSessionMutation.mutate(session.id);
+
+    if (result) {
+      toast({
+        title: "Success",
+        description: "Session has been cancelled",
+      });
+      refetch();
+    } else if (cancelSessionMutation.error) {
+      toast({
+        title: "Error",
+        description: cancelSessionMutation.error.message || "Failed to cancel session",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteClick = (session: SessionWithClient) => {
+    setSessionToDelete(session);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!sessionToDelete) return;
+
+    const result = await deleteSessionMutation.mutate(sessionToDelete.id);
+
+    if (result !== null) {
+      toast({
+        title: "Success",
+        description: "Session has been permanently deleted",
+      });
+      setDeleteDialogOpen(false);
+      setSessionToDelete(null);
+      refetch();
+    } else if (deleteSessionMutation.error) {
+      toast({
+        title: "Error",
+        description: deleteSessionMutation.error.message || "Failed to delete session",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Filter sessions by search query
   const filteredSessions = useMemo(() => {
     if (!sessionsData?.data || !searchQuery) return sessionsData?.data || [];
@@ -72,6 +287,22 @@ const Sessions = () => {
     );
   }, [sessionsData, searchQuery]);
 
+  // Transform session to form data for editing
+  const transformSessionToFormData = (session: SessionWithClient): SessionFormData => ({
+    client_id: session.client_id,
+    session_date: session.session_date,
+    session_time: session.session_time,
+    duration_minutes: session.duration_minutes || 50,
+    session_type: session.session_type || "In-person",
+    session_purpose: session.session_purpose || "",
+    status: session.status || "Scheduled",
+    payment_status: session.payment_status || "Pending",
+    payment_amount: session.payment_amount?.toString() || "",
+    location: session.location || "",
+    meeting_link: session.meeting_link || "",
+    session_notes: session.session_notes || "",
+  });
+
   return (
     <DashboardLayout>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -80,9 +311,19 @@ const Sessions = () => {
           <p className="text-muted-foreground mt-1 text-lg">Detailed history of all client encounters.</p>
         </div>
         
-        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground flex gap-2 rounded-xl h-11 shadow-sm shadow-primary/20">
-          <Plus className="w-4 h-4" /> Log New Session
-        </Button>
+        <SessionFormDialog
+          trigger={
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground flex gap-2 rounded-xl h-11 shadow-sm shadow-primary/20">
+              <Plus className="w-4 h-4" /> Log New Session
+            </Button>
+          }
+          open={isCreateDialogOpen}
+          onOpenChange={setIsCreateDialogOpen}
+          onSubmit={handleCreateSession}
+          isSubmitting={createSessionMutation.isLoading}
+          mode="create"
+          clients={clientsData?.data.map(c => ({ id: c.id, full_name: c.full_name })) || []}
+        />
       </div>
 
       <div className="grid gap-6">
@@ -236,12 +477,67 @@ const Sessions = () => {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-primary hover:bg-primary/10">
-                            <FileText className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:bg-muted">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 rounded-lg text-muted-foreground hover:bg-muted"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreVertical className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditClick(session);
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <Edit className="w-4 h-4 mr-2" />
+                                Edit Session
+                              </DropdownMenuItem>
+                              {session.status !== "Completed" && (
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCompleteSession(session);
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-2" />
+                                  Mark Completed
+                                </DropdownMenuItem>
+                              )}
+                              {session.status !== "Cancelled" && session.status !== "Completed" && (
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCancelSession(session);
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  <XCircle className="w-4 h-4 mr-2" />
+                                  Cancel Session
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteClick(session);
+                                }}
+                                className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete Permanently
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </td>
                     </tr>
@@ -256,6 +552,53 @@ const Sessions = () => {
           )}
         </div>
       </div>
+
+      {/* Edit Session Dialog */}
+      {selectedSession && (
+        <SessionFormDialog
+          trigger={<></>}
+          open={isEditDialogOpen}
+          onOpenChange={(open) => {
+            setIsEditDialogOpen(open);
+            if (!open) setSelectedSession(null);
+          }}
+          onSubmit={handleUpdateSession}
+          isSubmitting={updateSessionMutation.isLoading}
+          initialData={transformSessionToFormData(selectedSession)}
+          mode="edit"
+          clients={clientsData?.data.map(c => ({ id: c.id, full_name: c.full_name })) || []}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this session with{" "}
+              <span className="font-semibold">{sessionToDelete?.clients?.full_name}</span>{" "}
+              on {sessionToDelete?.session_date}. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setSessionToDelete(null);
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Permanently
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };
