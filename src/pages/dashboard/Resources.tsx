@@ -1,19 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -21,236 +11,215 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import {
   Plus,
   FolderOpen,
+  Search,
+  Filter,
+  AlertCircle,
+  Loader2,
   FileText,
   Video,
-  Edit,
-  Trash2,
-  Download,
-  Share2,
-  ExternalLink,
+  Link as LinkIcon,
+  StickyNote,
+  Headphones,
+  Image as ImageIcon,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-
-interface Resource {
-  id: string;
-  type: "document" | "video";
-  title: string;
-  description: string;
-  url: string;
-  moduleId: string;
-  fileName?: string;
-  fileSize?: string;
-  createdAt: Date;
-}
-
-interface Module {
-  id: string;
-  name: string;
-  description: string;
-  color: string;
-  resourceCount: number;
-}
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  useModulesWithCounts,
+  useCreateModule,
+  useUpdateModule,
+  useDeleteModule,
+  useGenerateShareToken,
+  useRevokeShareToken,
+  useToggleModuleActive,
+} from "@/hooks/use-modules";
+import {
+  useResourcesByModule,
+  useUnorganizedResources,
+  useCreateResource,
+  useUpdateResource,
+  useDeleteResource,
+  useResourceTags,
+  useResourceCountByType,
+} from "@/hooks/use-resources";
+import { useClients } from "@/hooks/use-clients";
+import {
+  useAssignedClients,
+  useAssignClientsToModule,
+} from "@/hooks/use-module-assignments";
+import {
+  ModuleCard,
+  ModuleFormDialog,
+  ResourceCard,
+  ResourceUploadDialog,
+  ShareModuleDialog,
+  AssignModuleDialog,
+} from "@/components/resources";
+import type { Module, Resource, ModuleInsert, ModuleUpdate, ResourceInsert, ResourceUpdate } from "@/lib/supabase/types";
+import { toast } from "@/hooks/use-toast";
 
 const Resources = () => {
-  const { toast } = useToast();
-  const [modules, setModules] = useState<Module[]>([
-    {
-      id: "1",
-      name: "Anxiety Management",
-      description: "Resources for managing anxiety and stress",
-      color: "bg-blue-100 text-blue-800",
-      resourceCount: 5,
-    },
-    {
-      id: "2",
-      name: "Mindfulness Practices",
-      description: "Meditation and mindfulness exercises",
-      color: "bg-green-100 text-green-800",
-      resourceCount: 3,
-    },
-    {
-      id: "3",
-      name: "Sleep Hygiene",
-      description: "Tips and resources for better sleep",
-      color: "bg-purple-100 text-purple-800",
-      resourceCount: 4,
-    },
-  ]);
+  const { therapist } = useAuth();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedModule, setSelectedModule] = useState<string | null>(null);
+  const [selectedResourceType, setSelectedResourceType] = useState<string>("all");
+  const [selectedTag, setSelectedTag] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  const [resources, setResources] = useState<Resource[]>([
-    {
-      id: "1",
-      type: "document",
-      title: "Breathing Exercises Guide",
-      description: "A comprehensive guide to various breathing techniques",
-      url: "#",
-      moduleId: "1",
-      fileName: "breathing-exercises.pdf",
-      fileSize: "2.4 MB",
-      createdAt: new Date("2024-01-15"),
-    },
-    {
-      id: "2",
-      type: "video",
-      title: "Introduction to Mindfulness",
-      description: "10-minute guided mindfulness meditation",
-      url: "https://www.youtube.com/watch?v=example",
-      moduleId: "2",
-      createdAt: new Date("2024-01-20"),
-    },
-    {
-      id: "3",
-      type: "document",
-      title: "Sleep Diary Template",
-      description: "Track your sleep patterns with this helpful template",
-      url: "#",
-      moduleId: "3",
-      fileName: "sleep-diary.pdf",
-      fileSize: "1.2 MB",
-      createdAt: new Date("2024-01-25"),
-    },
-  ]);
+  // Module state
+  const [moduleFormOpen, setModuleFormOpen] = useState(false);
+  const [editingModule, setEditingModule] = useState<Module | null>(null);
+  const [shareModuleDialogOpen, setShareModuleDialogOpen] = useState(false);
+  const [sharingModule, setSharingModule] = useState<Module | null>(null);
+  const [assignModuleDialogOpen, setAssignModuleDialogOpen] = useState(false);
+  const [assigningModule, setAssigningModule] = useState<Module | null>(null);
+  const [deleteModuleId, setDeleteModuleId] = useState<string | null>(null);
 
-  const [selectedModule, setSelectedModule] = useState<string>("all");
-  const [isModuleDialogOpen, setIsModuleDialogOpen] = useState(false);
-  const [isResourceDialogOpen, setIsResourceDialogOpen] = useState(false);
-  const [newModule, setNewModule] = useState({ name: "", description: "" });
-  const [newResource, setNewResource] = useState({
-    type: "document" as "document" | "video",
-    title: "",
-    description: "",
-    url: "",
-    moduleId: "",
-  });
+  // Resource state
+  const [resourceFormOpen, setResourceFormOpen] = useState(false);
+  const [editingResource, setEditingResource] = useState<Resource | null>(null);
+  const [deleteResourceId, setDeleteResourceId] = useState<string | null>(null);
 
-  const handleCreateModule = () => {
-    if (!newModule.name) {
-      toast({
-        title: "Error",
-        description: "Please enter a module name",
-        variant: "destructive",
-      });
-      return;
-    }
+  // Fetch data
+  const { data: modules = [], isLoading: isLoadingModules } = useModulesWithCounts();
+  const { data: clientsData, isLoading: isLoadingClients } = useClients(therapist?.id);
+  const clients = Array.isArray(clientsData) ? clientsData : (clientsData?.data || []);
+  const { data: selectedModuleResources = [] } = useResourcesByModule(selectedModule || undefined);
+  const { data: unorganizedResources = [] } = useUnorganizedResources();
+  const { data: resourceTags = [] } = useResourceTags();
+  const { data: resourceCountByType } = useResourceCountByType();
+  const { data: assignedClients = [] } = useAssignedClients(assigningModule?.id);
 
-    const colors = [
-      "bg-blue-100 text-blue-800",
-      "bg-green-100 text-green-800",
-      "bg-purple-100 text-purple-800",
-      "bg-orange-100 text-orange-800",
-      "bg-pink-100 text-pink-800",
-    ];
+  // Mutations
+  const createModuleMutation = useCreateModule();
+  const updateModuleMutation = useUpdateModule();
+  const deleteModuleMutation = useDeleteModule();
+  const generateShareTokenMutation = useGenerateShareToken();
+  const revokeShareTokenMutation = useRevokeShareToken();
+  const toggleModuleActiveMutation = useToggleModuleActive();
+  
+  const createResourceMutation = useCreateResource();
+  const updateResourceMutation = useUpdateResource();
+  const deleteResourceMutation = useDeleteResource();
+  
+  const assignClientsMutation = useAssignClientsToModule();
 
-    const module: Module = {
-      id: Date.now().toString(),
-      name: newModule.name,
-      description: newModule.description,
-      color: colors[Math.floor(Math.random() * colors.length)],
-      resourceCount: 0,
-    };
+  // Get all resources for display
+  const allResources = useMemo(() => {
+    return selectedModule ? selectedModuleResources : [...selectedModuleResources, ...unorganizedResources];
+  }, [selectedModule, selectedModuleResources, unorganizedResources]);
 
-    setModules([...modules, module]);
-    setNewModule({ name: "", description: "" });
-    setIsModuleDialogOpen(false);
+  // Filter and search resources
+  const filteredResources = useMemo(() => {
+    return allResources.filter((resource) => {
+      // Search filter
+      const matchesSearch =
+        !searchQuery ||
+        resource.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        resource.description?.toLowerCase().includes(searchQuery.toLowerCase());
+
+      // Type filter
+      const matchesType =
+        selectedResourceType === "all" ||
+        resource.resource_type === selectedResourceType;
+
+      // Tag filter
+      const matchesTag =
+        selectedTag === "all" ||
+        (resource.tags && resource.tags.includes(selectedTag));
+
+      return matchesSearch && matchesType && matchesTag;
+    });
+  }, [allResources, searchQuery, selectedResourceType, selectedTag]);
+
+  // Handlers
+  const handleCreateModule = async (data: ModuleInsert) => {
+    await createModuleMutation.mutateAsync(data);
+    toast({ title: "Module created successfully" });
+  };
+
+  const handleUpdateModule = async (data: ModuleUpdate) => {
+    if (!editingModule) return;
+    await updateModuleMutation.mutateAsync({
+      moduleId: editingModule.id,
+      updates: data,
+    });
+    toast({ title: "Module updated successfully" });
+  };
+
+  const handleDeleteModule = async () => {
+    if (!deleteModuleId) return;
+    await deleteModuleMutation.mutateAsync(deleteModuleId);
+    setDeleteModuleId(null);
+    toast({ title: "Module deleted successfully" });
+  };
+
+  const handleGenerateShareToken = async (moduleId: string) => {
+    const result = await generateShareTokenMutation.mutateAsync(moduleId);
+    return result.shareToken;
+  };
+
+  const handleRevokeShareToken = async (moduleId: string) => {
+    await revokeShareTokenMutation.mutateAsync(moduleId);
+  };
+
+  const handleToggleModuleActive = async (module: Module, isActive: boolean) => {
+    await toggleModuleActiveMutation.mutateAsync({
+      moduleId: module.id,
+      isActive,
+    });
     toast({
-      title: "Module created",
-      description: `"${module.name}" has been created successfully.`,
+      title: isActive ? "Module activated" : "Module deactivated",
     });
   };
 
-  const handleCreateResource = () => {
-    if (!newResource.title || !newResource.moduleId) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive",
+  const handleCreateOrUpdateResource = async (data: ResourceInsert | ResourceUpdate) => {
+    if (editingResource) {
+      await updateResourceMutation.mutateAsync({
+        resourceId: editingResource.id,
+        updates: data as ResourceUpdate,
       });
-      return;
+      toast({ title: "Resource updated successfully" });
+    } else {
+      await createResourceMutation.mutateAsync(data as ResourceInsert);
+      toast({ title: "Resource uploaded successfully" });
     }
+  };
 
-    const resource: Resource = {
-      id: Date.now().toString(),
-      ...newResource,
-      createdAt: new Date(),
-    };
+  const handleDeleteResource = async () => {
+    if (!deleteResourceId) return;
+    await deleteResourceMutation.mutateAsync(deleteResourceId);
+    setDeleteResourceId(null);
+    toast({ title: "Resource deleted successfully" });
+  };
 
-    setResources([...resources, resource]);
-    setNewResource({
-      type: "document",
-      title: "",
-      description: "",
-      url: "",
-      moduleId: "",
+  const handleAssignClients = async (moduleId: string, clientIds: string[], notes?: string) => {
+    await assignClientsMutation.mutateAsync({
+      moduleId,
+      clientIds,
+      therapistNotes: notes,
     });
-    setIsResourceDialogOpen(false);
+  };
 
-    // Update module resource count
-    setModules(
-      modules.map((m) =>
-        m.id === resource.moduleId
-          ? { ...m, resourceCount: m.resourceCount + 1 }
-          : m
-      )
+  const assignedClientIds = useMemo(() => {
+    return assignedClients.map((ac) => ac.client_id);
+  }, [assignedClients]);
+
+  if (!therapist) {
+    return (
+      <DashboardLayout>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>Not authenticated</AlertDescription>
+        </Alert>
+      </DashboardLayout>
     );
-
-    toast({
-      title: "Resource added",
-      description: `"${resource.title}" has been added successfully.`,
-    });
-  };
-
-  const handleDeleteResource = (resourceId: string) => {
-    const resource = resources.find((r) => r.id === resourceId);
-    if (!resource) return;
-
-    setResources(resources.filter((r) => r.id !== resourceId));
-    setModules(
-      modules.map((m) =>
-        m.id === resource.moduleId
-          ? { ...m, resourceCount: Math.max(0, m.resourceCount - 1) }
-          : m
-      )
-    );
-
-    toast({
-      title: "Resource deleted",
-      description: "The resource has been removed.",
-    });
-  };
-
-  const handleDeleteModule = (moduleId: string) => {
-    const module = modules.find((m) => m.id === moduleId);
-    if (!module) return;
-
-    if (module.resourceCount > 0) {
-      toast({
-        title: "Cannot delete module",
-        description: "Please remove all resources from this module first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setModules(modules.filter((m) => m.id !== moduleId));
-    toast({
-      title: "Module deleted",
-      description: `"${module.name}" has been deleted.`,
-    });
-  };
-
-  const filteredResources =
-    selectedModule === "all"
-      ? resources
-      : resources.filter((r) => r.moduleId === selectedModule);
-
-  const getModuleName = (moduleId: string) => {
-    return modules.find((m) => m.id === moduleId)?.name || "Unknown";
-  };
+  }
 
   return (
     <DashboardLayout>
@@ -261,410 +230,308 @@ const Resources = () => {
             Resources
           </h1>
           <p className="text-muted-foreground">
-            Manage documents and videos organized into modules for your clients
+            Organize and share therapeutic resources with your clients
           </p>
         </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="border-border/50">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
           <CardHeader className="pb-3">
             <CardDescription>Total Modules</CardDescription>
             <CardTitle className="text-3xl">{modules.length}</CardTitle>
           </CardHeader>
         </Card>
-        <Card className="border-border/50">
+          <Card>
           <CardHeader className="pb-3">
             <CardDescription>Total Resources</CardDescription>
-            <CardTitle className="text-3xl">{resources.length}</CardTitle>
+              <CardTitle className="text-3xl">{allResources.length}</CardTitle>
           </CardHeader>
         </Card>
-        <Card className="border-border/50">
+          <Card>
           <CardHeader className="pb-3">
             <CardDescription>Documents</CardDescription>
             <CardTitle className="text-3xl">
-              {resources.filter((r) => r.type === "document").length}
+                {resourceCountByType?.document || 0}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardDescription>Links</CardDescription>
+              <CardTitle className="text-3xl">
+                {resourceCountByType?.url || 0}
             </CardTitle>
           </CardHeader>
         </Card>
       </div>
 
       {/* Modules Section */}
-      <Card className="border-border/50">
+        <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Modules</CardTitle>
               <CardDescription>
-                Organize your resources into themed modules
+                  Organize your resources into themed collections
               </CardDescription>
             </div>
-            <Dialog open={isModuleDialogOpen} onOpenChange={setIsModuleDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-primary hover:bg-primary/90">
+              <Button
+                onClick={() => {
+                  setEditingModule(null);
+                  setModuleFormOpen(true);
+                }}
+              >
                   <Plus className="w-4 h-4 mr-2" />
                   New Module
                 </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create New Module</DialogTitle>
-                  <DialogDescription>
-                    Create a themed module to organize your resources
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="module-name">Module Name *</Label>
-                    <Input
-                      id="module-name"
-                      placeholder="e.g., Anxiety Management"
-                      value={newModule.name}
-                      onChange={(e) =>
-                        setNewModule({ ...newModule, name: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="module-description">Description</Label>
-                    <Textarea
-                      id="module-description"
-                      placeholder="Brief description of this module"
-                      value={newModule.description}
-                      onChange={(e) =>
-                        setNewModule({ ...newModule, description: e.target.value })
-                      }
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsModuleDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button onClick={handleCreateModule}>Create Module</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
           </div>
         </CardHeader>
         <CardContent>
+            {isLoadingModules ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : modules.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <FolderOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>No modules yet. Create your first module to get started.</p>
+              </div>
+            ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {modules.map((module) => (
-              <Card key={module.id} className="border-border/50">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      <FolderOpen className="w-5 h-5 text-primary" />
-                      <CardTitle className="text-lg">{module.name}</CardTitle>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                      onClick={() => handleDeleteModule(module.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <CardDescription className="text-xs">
-                    {module.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Badge className={module.color}>
-                    {module.resourceCount} resources
-                  </Badge>
-                </CardContent>
-              </Card>
+                  <ModuleCard
+                    key={module.id}
+                    module={module}
+                    onEdit={(m) => {
+                      setEditingModule(m);
+                      setModuleFormOpen(true);
+                    }}
+                    onDelete={(m) => setDeleteModuleId(m.id)}
+                    onShare={(m) => {
+                      setSharingModule(m);
+                      setShareModuleDialogOpen(true);
+                    }}
+                    onAssign={(m) => {
+                      setAssigningModule(m);
+                      setAssignModuleDialogOpen(true);
+                    }}
+                    onToggleActive={handleToggleModuleActive}
+                    onClick={(m) => setSelectedModule(m.id)}
+                  />
             ))}
           </div>
+            )}
         </CardContent>
       </Card>
 
       {/* Resources Section */}
-      <Card className="border-border/50">
+        <Card>
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <CardTitle>Resources</CardTitle>
               <CardDescription>
-                Documents and videos for your clients
+                  {selectedModule
+                    ? `Viewing resources in ${modules.find((m) => m.id === selectedModule)?.name}`
+                    : "All resources"}
               </CardDescription>
             </div>
-            <div className="flex items-center gap-3">
-              <Select value={selectedModule} onValueChange={setSelectedModule}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Filter by module" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Modules</SelectItem>
-                  {modules.map((module) => (
-                    <SelectItem key={module.id} value={module.id}>
-                      {module.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Dialog
-                open={isResourceDialogOpen}
-                onOpenChange={setIsResourceDialogOpen}
-              >
-                <DialogTrigger asChild>
-                  <Button className="bg-primary hover:bg-primary/90">
+              <div className="flex items-center gap-2">
+                {selectedModule && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedModule(null)}
+                  >
+                    View All
+                  </Button>
+                )}
+                <Button
+                  onClick={() => {
+                    setEditingResource(null);
+                    setResourceFormOpen(true);
+                  }}
+                >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Resource
                   </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add New Resource</DialogTitle>
-                    <DialogDescription>
-                      Add a document or video link to a module
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="resource-type">Resource Type *</Label>
-                      <Select
-                        value={newResource.type}
-                        onValueChange={(value: "document" | "video") =>
-                          setNewResource({ ...newResource, type: value })
-                        }
-                      >
-                        <SelectTrigger>
+              </div>
+            </div>
+
+            {/* Filters */}
+            <div className="flex flex-col md:flex-row gap-3 mt-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search resources..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Select value={selectedResourceType} onValueChange={setSelectedResourceType}>
+                <SelectTrigger className="w-full md:w-[180px]">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
                           <SelectItem value="document">
                             <div className="flex items-center gap-2">
-                              <FileText className="w-4 h-4" />
-                              Document
+                      <FileText className="h-4 w-4" />
+                      Documents
                             </div>
                           </SelectItem>
                           <SelectItem value="video">
                             <div className="flex items-center gap-2">
-                              <Video className="w-4 h-4" />
-                              YouTube Video
+                      <Video className="h-4 w-4" />
+                      Videos
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="audio">
+                    <div className="flex items-center gap-2">
+                      <Headphones className="h-4 w-4" />
+                      Audio
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="image">
+                    <div className="flex items-center gap-2">
+                      <ImageIcon className="h-4 w-4" />
+                      Images
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="url">
+                    <div className="flex items-center gap-2">
+                      <LinkIcon className="h-4 w-4" />
+                      Links
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="note">
+                    <div className="flex items-center gap-2">
+                      <StickyNote className="h-4 w-4" />
+                      Notes
                             </div>
                           </SelectItem>
                         </SelectContent>
                       </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="resource-module">Module *</Label>
-                      <Select
-                        value={newResource.moduleId}
-                        onValueChange={(value) =>
-                          setNewResource({ ...newResource, moduleId: value })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a module" />
+              {resourceTags.length > 0 && (
+                <Select value={selectedTag} onValueChange={setSelectedTag}>
+                  <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectValue placeholder="Filter by tag" />
                         </SelectTrigger>
                         <SelectContent>
-                          {modules.map((module) => (
-                            <SelectItem key={module.id} value={module.id}>
-                              {module.name}
+                    <SelectItem value="all">All Tags</SelectItem>
+                    {resourceTags.map((tag) => (
+                      <SelectItem key={tag} value={tag}>
+                        {tag}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="resource-title">Title *</Label>
-                      <Input
-                        id="resource-title"
-                        placeholder="Resource title"
-                        value={newResource.title}
-                        onChange={(e) =>
-                          setNewResource({ ...newResource, title: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="resource-url">
-                        {newResource.type === "video" ? "YouTube URL" : "Document URL"} *
-                      </Label>
-                      <Input
-                        id="resource-url"
-                        placeholder={
-                          newResource.type === "video"
-                            ? "https://www.youtube.com/watch?v=..."
-                            : "Upload or paste document URL"
-                        }
-                        value={newResource.url}
-                        onChange={(e) =>
-                          setNewResource({ ...newResource, url: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="resource-description">Description</Label>
-                      <Textarea
-                        id="resource-description"
-                        placeholder="Brief description of this resource"
-                        value={newResource.description}
-                        onChange={(e) =>
-                          setNewResource({
-                            ...newResource,
-                            description: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsResourceDialogOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button onClick={handleCreateResource}>Add Resource</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
+              )}
           </div>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="grid" className="w-full">
-            <TabsList className="mb-4">
-              <TabsTrigger value="grid">Grid View</TabsTrigger>
-              <TabsTrigger value="list">List View</TabsTrigger>
-            </TabsList>
-            <TabsContent value="grid" className="space-y-4">
+            {filteredResources.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <FolderOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>No resources found</p>
+              </div>
+            ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredResources.map((resource) => (
-                  <Card key={resource.id} className="border-border/50 hover:shadow-md transition-shadow">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-start gap-3 flex-1 min-w-0">
-                          {resource.type === "document" ? (
-                            <FileText className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
-                          ) : (
-                            <Video className="w-5 h-5 text-red-500 flex-shrink-0 mt-1" />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <CardTitle className="text-base truncate">
-                              {resource.title}
-                            </CardTitle>
-                            <Badge className="mt-1 text-xs" variant="outline">
-                              {getModuleName(resource.moduleId)}
-                            </Badge>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-destructive hover:text-destructive flex-shrink-0"
-                          onClick={() => handleDeleteResource(resource.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {resource.description}
-                      </p>
-                      {resource.type === "document" && resource.fileName && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>{resource.fileName}</span>
-                          <span>•</span>
-                          <span>{resource.fileSize}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <Button size="sm" variant="outline" className="flex-1" asChild>
-                          <a
-                            href={resource.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <ExternalLink className="w-3 h-3 mr-1" />
-                            Open
-                          </a>
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <Share2 className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <ResourceCard
+                    key={resource.id}
+                    resource={resource}
+                    onEdit={(r) => {
+                      setEditingResource(r);
+                      setResourceFormOpen(true);
+                    }}
+                    onDelete={(r) => setDeleteResourceId(r.id)}
+                    onMove={(r) => {
+                      // TODO: Implement move functionality
+                      toast({ title: "Move functionality coming soon" });
+                    }}
+                  />
                 ))}
               </div>
-              {filteredResources.length === 0 && (
-                <div className="text-center py-12 text-muted-foreground">
-                  <FolderOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No resources found in this module</p>
-                </div>
-              )}
-            </TabsContent>
-            <TabsContent value="list" className="space-y-2">
-              {filteredResources.map((resource) => (
-                <Card key={resource.id} className="border-border/50">
-                  <CardContent className="py-4">
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-4 flex-1 min-w-0">
-                        {resource.type === "document" ? (
-                          <FileText className="w-5 h-5 text-primary flex-shrink-0" />
-                        ) : (
-                          <Video className="w-5 h-5 text-red-500 flex-shrink-0" />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium truncate">{resource.title}</h4>
-                          <p className="text-sm text-muted-foreground truncate">
-                            {resource.description}
-                          </p>
-                        </div>
-                        <Badge variant="outline" className="flex-shrink-0">
-                          {getModuleName(resource.moduleId)}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <Button size="sm" variant="outline" asChild>
-                          <a
-                            href={resource.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <Share2 className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => handleDeleteResource(resource.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
+            )}
                   </CardContent>
                 </Card>
-              ))}
-              {filteredResources.length === 0 && (
-                <div className="text-center py-12 text-muted-foreground">
-                  <FolderOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No resources found in this module</p>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+
+        {/* Dialogs */}
+        <ModuleFormDialog
+          open={moduleFormOpen}
+          onOpenChange={setModuleFormOpen}
+          module={editingModule}
+          onSubmit={editingModule ? handleUpdateModule : handleCreateModule}
+          therapistId={therapist.id}
+        />
+
+        <ResourceUploadDialog
+          open={resourceFormOpen}
+          onOpenChange={setResourceFormOpen}
+          resource={editingResource}
+          moduleId={selectedModule}
+          onSubmit={handleCreateOrUpdateResource}
+          therapistId={therapist.id}
+        />
+
+        <ShareModuleDialog
+          open={shareModuleDialogOpen}
+          onOpenChange={setShareModuleDialogOpen}
+          module={sharingModule}
+          onGenerateToken={handleGenerateShareToken}
+          onRevokeToken={handleRevokeShareToken}
+        />
+
+        <AssignModuleDialog
+          open={assignModuleDialogOpen}
+          onOpenChange={setAssignModuleDialogOpen}
+          module={assigningModule}
+          clients={clients}
+          assignedClientIds={assignedClientIds}
+          isLoadingClients={isLoadingClients}
+          onAssign={handleAssignClients}
+        />
+
+        {/* Delete Confirmations */}
+        <AlertDialog open={!!deleteModuleId} onOpenChange={() => setDeleteModuleId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Module?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete the module and all its resources. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteModule} className="bg-destructive hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={!!deleteResourceId} onOpenChange={() => setDeleteResourceId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Resource?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete the resource. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteResource} className="bg-destructive hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </DashboardLayout>
   );
 };
 
 export default Resources;
-

@@ -127,7 +127,7 @@ export default function PublicAssessment() {
 
   const renderQuestionInput = (question: typeof assessment extends { questions: (infer Q)[] } ? Q : never) => {
     const questionType = question.question_type;
-    const options = question.options as QuestionOption[] | RatingScaleConfig | null;
+    const options = question.options as unknown as QuestionOption[] | RatingScaleConfig | null;
     const currentValue = responses[question.assessment_question_id];
 
     switch (questionType) {
@@ -188,7 +188,7 @@ export default function PublicAssessment() {
           />
         );
 
-      case "rating":
+      case "rating": {
         const config = options as unknown as RatingScaleConfig | null;
         const min = config?.min ?? 1;
         const max = config?.max ?? 5;
@@ -221,6 +221,7 @@ export default function PublicAssessment() {
             </div>
           </div>
         );
+      }
 
       default:
         return <p className="text-muted-foreground">Unknown question type</p>;

@@ -9,6 +9,183 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      modules: {
+        Row: {
+          id: string
+          therapist_id: string
+          name: string
+          description: string | null
+          color: string | null
+          display_order: number
+          is_active: boolean
+          share_token: string | null
+          is_public: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          therapist_id: string
+          name: string
+          description?: string | null
+          color?: string | null
+          display_order?: number
+          is_active?: boolean
+          share_token?: string | null
+          is_public?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          therapist_id?: string
+          name?: string
+          description?: string | null
+          color?: string | null
+          display_order?: number
+          is_active?: boolean
+          share_token?: string | null
+          is_public?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modules_therapist_id_fkey"
+            columns: ["therapist_id"]
+            isOneToOne: false
+            referencedRelation: "therapists"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      resources: {
+        Row: {
+          id: string
+          therapist_id: string
+          module_id: string | null
+          resource_type: string
+          title: string
+          description: string | null
+          file_url: string | null
+          external_url: string | null
+          content: string | null
+          metadata: Json
+          tags: string[]
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          therapist_id: string
+          module_id?: string | null
+          resource_type: string
+          title: string
+          description?: string | null
+          file_url?: string | null
+          external_url?: string | null
+          content?: string | null
+          metadata?: Json
+          tags?: string[]
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          therapist_id?: string
+          module_id?: string | null
+          resource_type?: string
+          title?: string
+          description?: string | null
+          file_url?: string | null
+          external_url?: string | null
+          content?: string | null
+          metadata?: Json
+          tags?: string[]
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resources_therapist_id_fkey"
+            columns: ["therapist_id"]
+            isOneToOne: false
+            referencedRelation: "therapists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resources_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      module_client_assignments: {
+        Row: {
+          id: string
+          module_id: string
+          client_id: string
+          therapist_id: string
+          assigned_at: string
+          accessed_at: string | null
+          completed_at: string | null
+          is_active: boolean
+          therapist_notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          module_id: string
+          client_id: string
+          therapist_id: string
+          assigned_at?: string
+          accessed_at?: string | null
+          completed_at?: string | null
+          is_active?: boolean
+          therapist_notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          module_id?: string
+          client_id?: string
+          therapist_id?: string
+          assigned_at?: string
+          accessed_at?: string | null
+          completed_at?: string | null
+          is_active?: boolean
+          therapist_notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_client_assignments_therapist_id_fkey"
+            columns: ["therapist_id"]
+            isOneToOne: false
+            referencedRelation: "therapists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "module_client_assignments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "module_client_assignments_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          }
+        ]
+      },
       activity_feed: {
         Row: {
           activity_type: string;
@@ -1198,5 +1375,58 @@ export interface AssessmentWithCounts extends Assessment {
   question_count: number;
   submission_count: number;
   assignment_count: number;
+}
+
+// Resource & Module types
+export type Module = Tables<"modules">;
+export type ModuleInsert = TablesInsert<"modules">;
+export type ModuleUpdate = TablesUpdate<"modules">;
+
+export type Resource = Tables<"resources">;
+export type ResourceInsert = TablesInsert<"resources">;
+export type ResourceUpdate = TablesUpdate<"resources">;
+
+export type ModuleClientAssignment = Tables<"module_client_assignments">;
+export type ModuleClientAssignmentInsert = TablesInsert<"module_client_assignments">;
+export type ModuleClientAssignmentUpdate = TablesUpdate<"module_client_assignments">;
+
+// Resource type enum
+export type ResourceType = "document" | "video" | "audio" | "image" | "url" | "note";
+
+// Extended type for module with counts
+export interface ModuleWithCounts extends Module {
+  resource_count: number;
+  assignment_count: number;
+}
+
+// Extended type for resource with module info
+export interface ResourceWithModule extends Resource {
+  modules?: Pick<Module, "id" | "name" | "color">;
+}
+
+// Extended type for module assignment with client info
+export interface ModuleClientAssignmentWithClient extends ModuleClientAssignment {
+  clients: Pick<Client, "id" | "full_name" | "email">;
+}
+
+// Extended type for module assignment with module info
+export interface ModuleClientAssignmentWithModule extends ModuleClientAssignment {
+  modules: Module;
+}
+
+// Resource metadata type (stored in JSON field)
+export interface ResourceMetadata {
+  fileName?: string;
+  fileSize?: number;
+  mimeType?: string;
+  duration?: number; // for video/audio in seconds
+  previewImage?: string;
+  linkPreview?: {
+    title?: string;
+    description?: string;
+    image?: string;
+    siteName?: string;
+    favicon?: string;
+  };
 }
 

@@ -106,3 +106,45 @@ export {
 export { useIsMobile } from "./use-mobile";
 export { useToast, toast } from "./use-toast";
 
+// Module hooks
+export {
+  useModules,
+  useModulesWithCounts,
+  useModule,
+  useCreateModule,
+  useUpdateModule,
+  useDeleteModule,
+  useGenerateShareToken as useGenerateModuleShareToken,
+  useRevokeShareToken as useRevokeModuleShareToken,
+  useToggleModuleActive,
+  useReorderModules,
+} from "./use-modules";
+
+// Resource hooks
+export {
+  useResources,
+  useResourcesByModule,
+  useUnorganizedResources,
+  useResource,
+  useResourceTags,
+  useResourceCountByType,
+  useCreateResource,
+  useUpdateResource,
+  useMoveResourceToModule,
+  useDeleteResource,
+  useSearchResourcesByTags,
+} from "./use-resources";
+
+// Module Assignment hooks
+export {
+  useAssignedClients as useModuleAssignedClients,
+  useAssignedModules,
+  useAssignmentCounts as useModuleAssignmentCounts,
+  useAssignClientsToModule,
+  useRemoveAssignment as useRemoveModuleAssignment,
+  useUpdateAssignment as useUpdateModuleAssignment,
+  useMarkAssignmentAccessed,
+  useCompleteAssignment as useCompleteModuleAssignment,
+} from "./use-module-assignments";
+
+

@@ -138,3 +138,82 @@ export type {
   PublicSubmissionData,
 } from "./submissions.service";
 
+// Modules Service
+export {
+  getModules,
+  getModulesWithCounts,
+  getModuleById,
+  getModuleByShareToken,
+  createModule,
+  updateModule,
+  deleteModule,
+  generateModuleShareToken,
+  revokeModuleShareToken,
+  toggleModuleActive,
+  reorderModules,
+  generateShareToken as generateModuleToken,
+} from "./modules.service";
+export type {
+  ModuleFilters,
+  ModuleQueryOptions,
+} from "./modules.service";
+
+// Resources Service
+export {
+  getResources,
+  getResourcesByModule,
+  getUnorganizedResources,
+  getResourceById,
+  createResource,
+  updateResource,
+  moveResourceToModule,
+  deleteResource,
+  getResourceTags,
+  searchResourcesByTags,
+  getResourceCountByType,
+} from "./resources.service";
+export type {
+  ResourceFilters,
+  ResourceQueryOptions,
+} from "./resources.service";
+
+// Module Assignments Service
+export {
+  assignClientsToModule,
+  getAssignedClients as getModuleAssignedClients,
+  getAssignedModules,
+  removeAssignment as removeModuleAssignment,
+  updateAssignment as updateModuleAssignment,
+  markAssignmentAccessed,
+  completeAssignment as completeModuleAssignment,
+  getAssignmentCounts as getModuleAssignmentCounts,
+} from "./module-assignments.service";
+
+// Storage Service
+export {
+  uploadFile,
+  deleteFile,
+  getFileUrl,
+  getFileMetadata,
+  getStorageUsage,
+  formatFileSize,
+  isValidFileType,
+  getFileIcon,
+} from "./storage.service";
+export type {
+  UploadProgress,
+  UploadResult,
+} from "./storage.service";
+
+// Link Preview Service
+export {
+  fetchLinkPreview,
+  validateUrl,
+  extractDomain,
+  getFaviconUrl,
+  isVideoUrl,
+} from "./link-preview.service";
+export type {
+  LinkPreview,
+} from "./link-preview.service";
+

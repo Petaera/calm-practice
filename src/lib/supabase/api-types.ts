@@ -18,14 +18,21 @@ export interface ApiError {
 }
 
 /**
- * Convert PostgrestError to ApiError
+ * Convert Supabase client errors (PostgREST, Storage, etc.) to ApiError.
  */
-export function toApiError(error: PostgrestError): ApiError {
+export function toApiError(error: unknown): ApiError {
+  if (typeof error === "object" && error !== null && "message" in error) {
+    const e = error as Partial<PostgrestError> & { message: string };
+    return {
+      message: e.message,
+      code: e.code,
+      details: e.details,
+      hint: e.hint,
+    };
+  }
+
   return {
-    message: error.message,
-    code: error.code,
-    details: error.details,
-    hint: error.hint,
+    message: "An unknown error occurred",
   };
 }
 
