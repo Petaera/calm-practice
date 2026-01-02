@@ -69,12 +69,23 @@ const Overview = () => {
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) {
+      return 'Good Morning';
+    } else if (hour < 18) {
+      return 'Good Afternoon';
+    } else {
+      return 'Good Evening';
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-semibold text-foreground">
-            Good Morning, {therapist?.full_name || 'Doctor'}
+            {getGreeting()}, {therapist?.full_name || 'Doctor'}
           </h1>
           <p className="text-muted-foreground mt-1 text-lg">Here is what's happening today.</p>
         </div>
