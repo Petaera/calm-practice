@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, Clock, MapPin, Search, Plus, FileText, MoreVertical, Video, Edit, Trash2, CheckCircle, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   useSessions,
   useCreateSession,
@@ -18,7 +19,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { SessionFormDialog, type SessionFormData } from "@/components/sessions";
-import type { SessionStatus, SessionInsert, SessionUpdate } from "@/lib/supabase";
+import type { SessionStatus, SessionInsert, SessionUpdate, PaymentStatus, SessionType } from "@/lib/supabase";
 import type { SessionWithClient } from "@/services/sessions.service";
 import {
   DropdownMenu,
@@ -50,6 +51,8 @@ const generateSessionId = (): string => {
 const Sessions = () => {
   const { therapist } = useAuth();
   const { toast } = useToast();
+  const location = useLocation();
+  const navigate = useNavigate();
   
   // UI State
   const [statusFilter, setStatusFilter] = useState<SessionStatus | undefined>();
@@ -60,6 +63,25 @@ const Sessions = () => {
   const [selectedSession, setSelectedSession] = useState<SessionWithClient | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState<SessionWithClient | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const shouldOpenCreate = params.get("new") === "1";
+    if (!shouldOpenCreate) return;
+
+    setIsCreateDialogOpen(true);
+
+    // remove flag so refresh doesn't keep reopening
+    params.delete("new");
+    const nextSearch = params.toString();
+    navigate(
+      {
+        pathname: location.pathname,
+        search: nextSearch ? `?${nextSearch}` : "",
+      },
+      { replace: true }
+    );
+  }, [location.pathname, location.search, navigate]);
 
   // Data fetching
   const {
@@ -293,10 +315,10 @@ const Sessions = () => {
     session_date: session.session_date,
     session_time: session.session_time,
     duration_minutes: session.duration_minutes || 50,
-    session_type: session.session_type || "In-person",
+    session_type: session.session_type as SessionType || "In-person",
     session_purpose: session.session_purpose || "",
-    status: session.status || "Scheduled",
-    payment_status: session.payment_status || "Pending",
+    status: session.status as SessionStatus || "Scheduled",
+    payment_status: session.payment_status as PaymentStatus || "Pending",
     payment_amount: session.payment_amount?.toString() || "",
     location: session.location || "",
     meeting_link: session.meeting_link || "",

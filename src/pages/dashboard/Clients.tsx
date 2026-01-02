@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Search, Filter, MoreVertical, Calendar, Edit, Trash2, Archive, ArchiveRestore } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   useClients,
   useClientCountByStatus,
@@ -97,6 +98,8 @@ const transformFormDataToClientInsert = (
 const Clients = () => {
   const { therapist } = useAuth();
   const { toast } = useToast();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // UI State
   const [searchQuery, setSearchQuery] = useState("");
@@ -107,6 +110,25 @@ const Clients = () => {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const shouldOpenCreate = params.get("new") === "1";
+    if (!shouldOpenCreate) return;
+
+    setIsCreateDialogOpen(true);
+
+    // remove flag so refresh doesn't keep reopening
+    params.delete("new");
+    const nextSearch = params.toString();
+    navigate(
+      {
+        pathname: location.pathname,
+        search: nextSearch ? `?${nextSearch}` : "",
+      },
+      { replace: true }
+    );
+  }, [location.pathname, location.search, navigate]);
 
   // Data fetching
   const {

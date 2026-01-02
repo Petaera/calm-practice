@@ -13,6 +13,7 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { useClientCountByStatus, useUpcomingSessions, usePendingTasks } from "@/hooks";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 
 const StatCard = ({ title, value, icon: Icon, description, isLoading }: { title: string, value: number, icon: React.ElementType, description: string, isLoading: boolean }) => (
   <Card className="border-none shadow-sm bg-card transition-all hover:shadow-md">
@@ -39,6 +40,7 @@ const StatCard = ({ title, value, icon: Icon, description, isLoading }: { title:
 
 const Overview = () => {
   const { therapist } = useAuth();
+  const navigate = useNavigate();
   const { data: clientCounts, isLoading: clientsLoading } = useClientCountByStatus(therapist?.id);
   const { data: upcomingSessions, isLoading: sessionsLoading } = useUpcomingSessions(therapist?.id, 5);
   const { data: pendingTasks, isLoading: tasksLoading } = usePendingTasks(therapist?.id, 5);
@@ -91,10 +93,17 @@ const Overview = () => {
         </div>
         
         <div className="flex flex-wrap gap-3">
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground flex gap-2 rounded-xl h-11">
+          <Button
+            className="bg-primary hover:bg-primary/90 text-primary-foreground flex gap-2 rounded-xl h-11"
+            onClick={() => navigate("/dashboard/sessions?new=1")}
+          >
             <Plus className="w-4 h-4" /> Add Session
           </Button>
-          <Button variant="outline" className="flex gap-2 rounded-xl h-11 border-border shadow-sm">
+          <Button
+            variant="outline"
+            className="flex gap-2 rounded-xl h-11 border-border shadow-sm"
+            onClick={() => navigate("/dashboard/clients?new=1")}
+          >
             <Plus className="w-4 h-4" /> Add Client
           </Button>
         </div>
