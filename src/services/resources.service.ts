@@ -292,3 +292,51 @@ export async function getResourceCountByType(
   return { data: counts, error: null };
 }
 
+/**
+ * Add multiple resources to a module
+ */
+export async function addResourcesToModule(
+  moduleId: string,
+  resourceIds: string[]
+): Promise<ApiResponse<Resource[]>> {
+  const { data, error } = await supabase
+    .from("resources")
+    .update({ module_id: moduleId, updated_at: new Date().toISOString() })
+    .in("id", resourceIds)
+    .select();
+
+  if (error) {
+    return { data: null, error: toApiError(error) };
+  }
+
+  return { data: data ?? [], error: null };
+}
+
+/**
+ * Remove a resource from a module (set module_id to null)
+ */
+export async function removeResourceFromModule(
+  resourceId: string
+): Promise<ApiResponse<Resource>> {
+  return updateResource(resourceId, { module_id: null });
+}
+
+/**
+ * Remove multiple resources from a module
+ */
+export async function removeResourcesFromModule(
+  resourceIds: string[]
+): Promise<ApiResponse<Resource[]>> {
+  const { data, error } = await supabase
+    .from("resources")
+    .update({ module_id: null, updated_at: new Date().toISOString() })
+    .in("id", resourceIds)
+    .select();
+
+  if (error) {
+    return { data: null, error: toApiError(error) };
+  }
+
+  return { data: data ?? [], error: null };
+}
+

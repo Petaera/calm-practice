@@ -27,6 +27,8 @@ import {
   StickyNote,
   Headphones,
   Image as ImageIcon,
+  Grid3x3,
+  List,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -47,18 +49,29 @@ import {
   useResourceTags,
   useResourceCountByType,
 } from "@/hooks/use-resources";
+import { useResourcesInModule } from "@/hooks/use-module-resources";
 import { useClients } from "@/hooks/use-clients";
 import {
   useAssignedClients,
   useAssignClientsToModule,
 } from "@/hooks/use-module-assignments";
 import {
+  useAssignedClients as useResourceAssignedClients,
+  useAssignClientsToResource,
+} from "@/hooks/use-resource-assignments";
+import { useAddResourcesToModules } from "@/hooks/use-module-resources";
+import {
   ModuleCard,
   ModuleFormDialog,
   ResourceCard,
+  ResourceListItem,
   ResourceUploadDialog,
   ShareModuleDialog,
   AssignModuleDialog,
+  AssignResourceDialog,
+  ModuleResourceManager,
+  ResourceLibraryDialog,
+  AddToModuleDialog,
 } from "@/components/resources";
 import type { Module, Resource, ModuleInsert, ModuleUpdate, ResourceInsert, ResourceUpdate } from "@/lib/supabase/types";
 import { toast } from "@/hooks/use-toast";
@@ -84,16 +97,36 @@ const Resources = () => {
   const [resourceFormOpen, setResourceFormOpen] = useState(false);
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
   const [deleteResourceId, setDeleteResourceId] = useState<string | null>(null);
+  const [assignResourceDialogOpen, setAssignResourceDialogOpen] = useState(false);
+  const [assigningResource, setAssigningResource] = useState<Resource | null>(null);
+  const [moduleResourceManagerOpen, setModuleResourceManagerOpen] = useState(false);
+  const [managingModule, setManagingModule] = useState<Module | null>(null);
+  const [addToModuleDialogOpen, setAddToModuleDialogOpen] = useState(false);
+  const [resourceToAddToModule, setResourceToAddToModule] = useState<Resource | null>(null);
 
   // Fetch data
   const { data: modules = [], isLoading: isLoadingModules } = useModulesWithCounts();
   const { data: clientsData, isLoading: isLoadingClients } = useClients(therapist?.id);
   const clients = Array.isArray(clientsData) ? clientsData : (clientsData?.data || []);
-  const { data: selectedModuleResources = [] } = useResourcesByModule(selectedModule || undefined);
+  // Use new junction table for module resources, fallback to old method for backward compatibility
+  const { data: selectedModuleResourcesNew = [] } = useResourcesInModule(selectedModule || undefined);
+  const { data: selectedModuleResourcesOld = [] } = useResourcesByModule(selectedModule || undefined);
   const { data: unorganizedResources = [] } = useUnorganizedResources();
+  
+  // Combine resources from both old (module_id) and new (junction table) approaches
+  const selectedModuleResources = useMemo(() => {
+    if (!selectedModule) return [];
+    // Combine and deduplicate
+    const allResources = [...selectedModuleResourcesNew, ...selectedModuleResourcesOld];
+    const uniqueResources = Array.from(
+      new Map(allResources.map((r) => [r.id, r])).values()
+    );
+    return uniqueResources;
+  }, [selectedModule, selectedModuleResourcesNew, selectedModuleResourcesOld]);
   const { data: resourceTags = [] } = useResourceTags();
   const { data: resourceCountByType } = useResourceCountByType();
   const { data: assignedClients = [] } = useAssignedClients(assigningModule?.id);
+  const { data: resourceAssignedClients = [] } = useResourceAssignedClients(assigningResource?.id);
 
   // Mutations
   const createModuleMutation = useCreateModule();
@@ -108,6 +141,8 @@ const Resources = () => {
   const deleteResourceMutation = useDeleteResource();
   
   const assignClientsMutation = useAssignClientsToModule();
+  const assignClientsToResourceMutation = useAssignClientsToResource();
+  const addResourcesToModulesMutation = useAddResourcesToModules();
 
   // Get all resources for display
   const allResources = useMemo(() => {
@@ -139,17 +174,41 @@ const Resources = () => {
 
   // Handlers
   const handleCreateModule = async (data: ModuleInsert) => {
-    await createModuleMutation.mutateAsync(data);
+    const createdModule = await createModuleMutation.mutateAsync(data);
     toast({ title: "Module created successfully" });
+    return createdModule;
   };
 
-  const handleUpdateModule = async (data: ModuleUpdate) => {
+  const handleModuleCreated = async (moduleId: string, selectedResourceIds?: string[]) => {
+    if (selectedResourceIds && selectedResourceIds.length > 0) {
+      try {
+        await addResourcesToModulesMutation.mutateAsync({
+          resourceIds: selectedResourceIds,
+          moduleIds: [moduleId],
+        });
+        toast({
+          title: "Resources added",
+          description: `Successfully added ${selectedResourceIds.length} resource(s) to the module.`,
+        });
+      } catch (error) {
+        console.error("Error adding resources to module:", error);
+        toast({
+          title: "Warning",
+          description: "Module created but failed to add some resources.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleUpdateModule = async (data: ModuleUpdate): Promise<Module | void> => {
     if (!editingModule) return;
-    await updateModuleMutation.mutateAsync({
+    const updatedModule = await updateModuleMutation.mutateAsync({
       moduleId: editingModule.id,
       updates: data,
     });
     toast({ title: "Module updated successfully" });
+    return updatedModule;
   };
 
   const handleDeleteModule = async () => {
@@ -206,9 +265,28 @@ const Resources = () => {
     });
   };
 
+  const handleAssignResourceToClients = async (resourceId: string, clientIds: string[], notes?: string) => {
+    await assignClientsToResourceMutation.mutateAsync({
+      resourceId,
+      clientIds,
+      therapistNotes: notes,
+    });
+  };
+
+  const handleAddResourceToModules = async (resourceId: string, moduleIds: string[]) => {
+    await addResourcesToModulesMutation.mutateAsync({
+      resourceIds: [resourceId],
+      moduleIds,
+    });
+  };
+
   const assignedClientIds = useMemo(() => {
     return assignedClients.map((ac) => ac.client_id);
   }, [assignedClients]);
+
+  const resourceAssignedClientIds = useMemo(() => {
+    return resourceAssignedClients.map((ac) => ac.client_id);
+  }, [resourceAssignedClients]);
 
   if (!therapist) {
     return (
@@ -316,6 +394,10 @@ const Resources = () => {
                       setAssigningModule(m);
                       setAssignModuleDialogOpen(true);
                     }}
+                    onManageResources={(m) => {
+                      setManagingModule(m);
+                      setModuleResourceManagerOpen(true);
+                    }}
                     onToggleActive={handleToggleModuleActive}
                     onClick={(m) => setSelectedModule(m.id)}
                   />
@@ -347,15 +429,33 @@ const Resources = () => {
                     View All
                   </Button>
                 )}
+                <div className="flex items-center border rounded-md">
+                  <Button
+                    variant={viewMode === "grid" ? "default" : "ghost"}
+                    size="sm"
+                    className="rounded-r-none"
+                    onClick={() => setViewMode("grid")}
+                  >
+                    <Grid3x3 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === "list" ? "default" : "ghost"}
+                    size="sm"
+                    className="rounded-l-none"
+                    onClick={() => setViewMode("list")}
+                  >
+                    <List className="w-4 h-4" />
+                  </Button>
+                </div>
                 <Button
                   onClick={() => {
                     setEditingResource(null);
                     setResourceFormOpen(true);
                   }}
                 >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Resource
-                  </Button>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Resource
+                </Button>
               </div>
             </div>
 
@@ -437,7 +537,7 @@ const Resources = () => {
                 <FolderOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
                 <p>No resources found</p>
               </div>
-            ) : (
+            ) : viewMode === "grid" ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredResources.map((resource) => (
                   <ResourceCard
@@ -448,9 +548,45 @@ const Resources = () => {
                       setResourceFormOpen(true);
                     }}
                     onDelete={(r) => setDeleteResourceId(r.id)}
-                    onMove={(r) => {
-                      // TODO: Implement move functionality
-                      toast({ title: "Move functionality coming soon" });
+                    onAddToModule={(r) => {
+                      setResourceToAddToModule(r);
+                      setAddToModuleDialogOpen(true);
+                    }}
+                    onAssign={(r) => {
+                      setAssigningResource(r);
+                      setAssignResourceDialogOpen(true);
+                    }}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {/* List view header */}
+                <div className="grid grid-cols-12 gap-4 px-4 py-2 text-xs font-medium text-muted-foreground border-b">
+                  <div className="col-span-1">Type</div>
+                  <div className="col-span-3">Title</div>
+                  <div className="col-span-2">Modules</div>
+                  <div className="col-span-2">Tags</div>
+                  <div className="col-span-1">Date</div>
+                  <div className="col-span-2">Metadata</div>
+                  <div className="col-span-1"></div>
+                </div>
+                {filteredResources.map((resource) => (
+                  <ResourceListItem
+                    key={resource.id}
+                    resource={resource}
+                    onEdit={(r) => {
+                      setEditingResource(r);
+                      setResourceFormOpen(true);
+                    }}
+                    onDelete={(r) => setDeleteResourceId(r.id)}
+                    onAddToModule={(r) => {
+                      setResourceToAddToModule(r);
+                      setAddToModuleDialogOpen(true);
+                    }}
+                    onAssign={(r) => {
+                      setAssigningResource(r);
+                      setAssignResourceDialogOpen(true);
                     }}
                   />
                 ))}
@@ -466,6 +602,9 @@ const Resources = () => {
           module={editingModule}
           onSubmit={editingModule ? handleUpdateModule : handleCreateModule}
           therapistId={therapist.id}
+          onModuleCreated={async (moduleId, selectedResourceIds) => {
+            await handleModuleCreated(moduleId, selectedResourceIds);
+          }}
         />
 
         <ResourceUploadDialog
@@ -493,6 +632,36 @@ const Resources = () => {
           assignedClientIds={assignedClientIds}
           isLoadingClients={isLoadingClients}
           onAssign={handleAssignClients}
+        />
+
+        <AssignResourceDialog
+          open={assignResourceDialogOpen}
+          onOpenChange={setAssignResourceDialogOpen}
+          resource={assigningResource}
+          clients={clients}
+          assignedClientIds={resourceAssignedClientIds}
+          isLoadingClients={isLoadingClients}
+          onAssign={handleAssignResourceToClients}
+        />
+
+        <ModuleResourceManager
+          open={moduleResourceManagerOpen}
+          onOpenChange={setModuleResourceManagerOpen}
+          module={managingModule}
+          onResourcesChange={() => {
+            // Invalidate queries will be handled by the hooks
+          }}
+        />
+
+        <AddToModuleDialog
+          open={addToModuleDialogOpen}
+          onOpenChange={setAddToModuleDialogOpen}
+          resourceId={resourceToAddToModule?.id || null}
+          onAdd={async (moduleIds) => {
+            if (resourceToAddToModule) {
+              await handleAddResourceToModules(resourceToAddToModule.id, moduleIds);
+            }
+          }}
         />
 
         {/* Delete Confirmations */}

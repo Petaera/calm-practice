@@ -18,6 +18,7 @@ import {
   Trash2,
   Eye,
   EyeOff,
+  Package,
 } from "lucide-react";
 import type { ModuleWithCounts } from "@/lib/supabase/types";
 
@@ -27,6 +28,7 @@ interface ModuleCardProps {
   onDelete: (module: ModuleWithCounts) => void;
   onShare: (module: ModuleWithCounts) => void;
   onAssign: (module: ModuleWithCounts) => void;
+  onManageResources?: (module: ModuleWithCounts) => void;
   onToggleActive: (module: ModuleWithCounts, isActive: boolean) => void;
   onClick?: (module: ModuleWithCounts) => void;
 }
@@ -37,6 +39,7 @@ export function ModuleCard({
   onDelete,
   onShare,
   onAssign,
+  onManageResources,
   onToggleActive,
   onClick,
 }: ModuleCardProps) {
@@ -88,6 +91,15 @@ export function ModuleCard({
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Module
               </DropdownMenuItem>
+              {onManageResources && (
+                <DropdownMenuItem onClick={(e) => {
+                  e.stopPropagation();
+                  onManageResources(module);
+                }}>
+                  <Package className="h-4 w-4 mr-2" />
+                  Manage Resources
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={(e) => {
                 e.stopPropagation();
                 onAssign(module);

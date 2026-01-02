@@ -100,7 +100,7 @@ export async function getModulesWithCounts(
     .from("modules")
     .select(`
       *,
-      resources(count),
+      module_resources(count),
       module_client_assignments(count)
     `)
     .eq("therapist_id", therapistId)
@@ -114,7 +114,7 @@ export async function getModulesWithCounts(
   // Transform the response to include counts
   const modulesWithCounts = (data ?? []).map((module) => ({
     ...module,
-    resource_count: (module.resources as unknown as { count: number }[])?.[0]?.count ?? 0,
+    resource_count: (module.module_resources as unknown as { count: number }[])?.[0]?.count ?? 0,
     assignment_count: (module.module_client_assignments as unknown as { count: number }[])?.[0]?.count ?? 0,
   }));
 

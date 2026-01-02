@@ -186,6 +186,109 @@ export type Database = {
           }
         ]
       },
+      resource_client_assignments: {
+        Row: {
+          id: string
+          resource_id: string
+          client_id: string
+          therapist_id: string
+          assigned_at: string
+          accessed_at: string | null
+          completed_at: string | null
+          is_active: boolean
+          therapist_notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          resource_id: string
+          client_id: string
+          therapist_id: string
+          assigned_at?: string
+          accessed_at?: string | null
+          completed_at?: string | null
+          is_active?: boolean
+          therapist_notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          resource_id?: string
+          client_id?: string
+          therapist_id?: string
+          assigned_at?: string
+          accessed_at?: string | null
+          completed_at?: string | null
+          is_active?: boolean
+          therapist_notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_client_assignments_therapist_id_fkey"
+            columns: ["therapist_id"]
+            isOneToOne: false
+            referencedRelation: "therapists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_client_assignments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_client_assignments_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          }
+        ]
+      },
+      module_resources: {
+        Row: {
+          id: string
+          module_id: string
+          resource_id: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          module_id: string
+          resource_id: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          module_id?: string
+          resource_id?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_resources_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "module_resources_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          }
+        ]
+      },
       activity_feed: {
         Row: {
           activity_type: string;
@@ -1412,6 +1515,44 @@ export interface ModuleClientAssignmentWithClient extends ModuleClientAssignment
 // Extended type for module assignment with module info
 export interface ModuleClientAssignmentWithModule extends ModuleClientAssignment {
   modules: Module;
+}
+
+// Resource client assignment types
+export type ResourceClientAssignment = Tables<"resource_client_assignments">;
+export type ResourceClientAssignmentInsert = TablesInsert<"resource_client_assignments">;
+export type ResourceClientAssignmentUpdate = TablesUpdate<"resource_client_assignments">;
+
+// Extended type for resource assignment with client info
+export interface ResourceClientAssignmentWithClient extends ResourceClientAssignment {
+  clients: Pick<Client, "id" | "full_name" | "email">;
+}
+
+// Extended type for resource assignment with resource info
+export interface ResourceClientAssignmentWithResource extends ResourceClientAssignment {
+  resources: Resource;
+}
+
+// Module-resource junction table types
+export type ModuleResource = Tables<"module_resources">;
+export type ModuleResourceInsert = TablesInsert<"module_resources">;
+export type ModuleResourceUpdate = TablesUpdate<"module_resources">;
+
+// Extended type for resource with modules
+export interface ResourceWithModules extends Resource {
+  module_resources?: Array<{
+    id: string;
+    module_id: string;
+    modules: Pick<Module, "id" | "name" | "color">;
+  }>;
+}
+
+// Extended type for module with resources (using junction table)
+export interface ModuleWithResources extends Module {
+  module_resources?: Array<{
+    id: string;
+    resource_id: string;
+    resources: Resource;
+  }>;
 }
 
 // Resource metadata type (stored in JSON field)

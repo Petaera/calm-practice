@@ -13,14 +13,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { ResourceLibraryDialog } from "./ResourceLibraryDialog";
 import type { Module, ModuleInsert, ModuleUpdate } from "@/lib/supabase/types";
 
 interface ModuleFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   module?: Module | null;
-  onSubmit: (data: ModuleInsert | ModuleUpdate) => Promise<void>;
+  onSubmit: (data: ModuleInsert | ModuleUpdate) => Promise<Module | void>;
   therapistId: string;
+  onModuleCreated?: (moduleId: string, selectedResourceIds?: string[]) => void; // Callback when module is created with selected resources
 }
 
 interface ModuleFormData {
@@ -47,8 +51,11 @@ export function ModuleFormDialog({
   module,
   onSubmit,
   therapistId,
+  onModuleCreated,
 }: ModuleFormDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedResourceIds, setSelectedResourceIds] = useState<string[]>([]);
+  const [resourceLibraryOpen, setResourceLibraryOpen] = useState(false);
   const {
     register,
     handleSubmit,
@@ -78,6 +85,8 @@ export function ModuleFormDialog({
           color: module.color || "bg-primary",
           is_active: module.is_active,
         });
+        // Don't allow resource selection when editing
+        setSelectedResourceIds([]);
       } else {
         reset({
           name: "",
@@ -85,6 +94,7 @@ export function ModuleFormDialog({
           color: "bg-primary",
           is_active: true,
         });
+        setSelectedResourceIds([]);
       }
     }
   }, [open, module, reset]);
@@ -100,17 +110,23 @@ export function ModuleFormDialog({
           color: data.color,
           is_active: data.is_active,
         });
+        onOpenChange(false);
       } else {
         // Create new module
-        await onSubmit({
+        const moduleData = {
           therapist_id: therapistId,
           name: data.name,
           description: data.description || null,
           color: data.color,
           is_active: data.is_active,
-        });
+        };
+        const createdModule = await onSubmit(moduleData);
+        // Call onModuleCreated with the new module ID and selected resources
+        if (onModuleCreated && createdModule) {
+          await onModuleCreated(createdModule.id, selectedResourceIds);
+        }
+        onOpenChange(false);
       }
-      onOpenChange(false);
     } catch (error) {
       console.error("Error saving module:", error);
     } finally {
@@ -119,20 +135,21 @@ export function ModuleFormDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>
-            {module ? "Edit Module" : "Create New Module"}
-          </DialogTitle>
-          <DialogDescription>
-            {module
-              ? "Update the module details below."
-              : "Create a new module to organize your resources."}
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {module ? "Edit Module" : "Create New Module"}
+            </DialogTitle>
+            <DialogDescription>
+              {module
+                ? "Update the module details below."
+                : "Create a new module to organize your resources."}
+            </DialogDescription>
+          </DialogHeader>
 
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">
               Module Name <span className="text-destructive">*</span>
@@ -192,6 +209,49 @@ export function ModuleFormDialog({
             />
           </div>
 
+          {/* Resource Selection - Only show when creating new module */}
+          {!module && (
+            <>
+              <Separator />
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-base">Add Resources (Optional)</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Select existing resources to add to this module
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setResourceLibraryOpen(true)}
+                  >
+                    {selectedResourceIds.length > 0
+                      ? `Change (${selectedResourceIds.length})`
+                      : "Select Resources"}
+                  </Button>
+                </div>
+                {selectedResourceIds.length > 0 && (
+                  <div className="rounded-lg border p-3 bg-muted/50">
+                    <p className="text-sm font-medium mb-2">
+                      {selectedResourceIds.length} resource{selectedResourceIds.length !== 1 ? "s" : ""} selected
+                    </p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedResourceIds([])}
+                      className="h-7 text-xs"
+                    >
+                      Clear selection
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
           <DialogFooter>
             <Button
               type="button"
@@ -212,6 +272,17 @@ export function ModuleFormDialog({
         </form>
       </DialogContent>
     </Dialog>
+
+    <ResourceLibraryDialog
+      open={resourceLibraryOpen}
+      onOpenChange={setResourceLibraryOpen}
+      selectedResourceIds={selectedResourceIds}
+      onSelect={setSelectedResourceIds}
+      title="Select Resources"
+      description="Choose resources to add to this module"
+      multiSelect={true}
+    />
+    </>
   );
 }
 

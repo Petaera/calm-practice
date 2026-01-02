@@ -167,6 +167,9 @@ export {
   createResource,
   updateResource,
   moveResourceToModule,
+  addResourcesToModule,
+  removeResourceFromModule,
+  removeResourcesFromModule,
   deleteResource,
   getResourceTags,
   searchResourcesByTags,
@@ -176,6 +179,20 @@ export type {
   ResourceFilters,
   ResourceQueryOptions,
 } from "./resources.service";
+
+// Resource Assignments Service
+export {
+  assignClientsToResource,
+  getAssignedClients as getResourceAssignedClients,
+  getAssignedResources,
+  removeAssignment as removeResourceAssignment,
+  removeResourceClientAssignment,
+  updateAssignment as updateResourceAssignment,
+  markAssignmentAccessed as markResourceAssignmentAccessed,
+  completeAssignment as completeResourceAssignment,
+  getAssignmentCounts as getResourceAssignmentCounts,
+  getAllClientResources,
+} from "./resource-assignments.service";
 
 // Module Assignments Service
 export {
@@ -188,6 +205,16 @@ export {
   completeAssignment as completeModuleAssignment,
   getAssignmentCounts as getModuleAssignmentCounts,
 } from "./module-assignments.service";
+
+// Module Resources Service (many-to-many relationship)
+export {
+  addResourcesToModules,
+  removeResourcesFromModules,
+  removeResourceFromAllModules,
+  getModulesForResource,
+  getResourcesInModule,
+  getResourceWithModules,
+} from "./module-resources.service";
 
 // Storage Service
 export {

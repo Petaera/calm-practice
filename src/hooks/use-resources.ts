@@ -9,6 +9,9 @@ import {
   createResource,
   updateResource,
   moveResourceToModule,
+  addResourcesToModule,
+  removeResourceFromModule,
+  removeResourcesFromModule,
   deleteResource,
   getResourceTags,
   searchResourcesByTags,
@@ -244,6 +247,80 @@ export function useSearchResourcesByTags(tags: string[]) {
       return result.data || [];
     },
     enabled: !!therapist?.id && tags.length > 0,
+  });
+}
+
+/**
+ * Add multiple resources to a module
+ */
+export function useAddResourcesToModule() {
+  const queryClient = useQueryClient();
+  const { therapist } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({ moduleId, resourceIds }: { moduleId: string; resourceIds: string[] }) => {
+      const result = await addResourcesToModule(moduleId, resourceIds);
+      if (result.error) throw new Error(result.error.message);
+      return result.data;
+    },
+    onSuccess: (_, variables) => {
+      if (therapist?.id) {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.resources(therapist.id) });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.resourcesByModule(variables.moduleId) });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.unorganizedResources(therapist.id) });
+      }
+    },
+  });
+}
+
+/**
+ * Remove a resource from a module
+ */
+export function useRemoveResourceFromModule() {
+  const queryClient = useQueryClient();
+  const { therapist } = useAuth();
+
+  return useMutation({
+    mutationFn: async (resourceId: string) => {
+      const result = await removeResourceFromModule(resourceId);
+      if (result.error) throw new Error(result.error.message);
+      return result.data;
+    },
+    onSuccess: (data) => {
+      if (therapist?.id && data) {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.resources(therapist.id) });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.resource(data.id) });
+        if (data.module_id) {
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.resourcesByModule(data.module_id) });
+        }
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.unorganizedResources(therapist.id) });
+      }
+    },
+  });
+}
+
+/**
+ * Remove multiple resources from a module
+ */
+export function useRemoveResourcesFromModule() {
+  const queryClient = useQueryClient();
+  const { therapist } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({ resourceIds, moduleId }: { resourceIds: string[]; moduleId?: string }) => {
+      const result = await removeResourcesFromModule(resourceIds);
+      if (result.error) throw new Error(result.error.message);
+      return { data: result.data, moduleId };
+    },
+    onSuccess: (_, variables) => {
+      if (therapist?.id) {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.resources(therapist.id) });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.unorganizedResources(therapist.id) });
+        if (variables.moduleId) {
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.resourcesByModule(variables.moduleId) });
+        }
+      }
+    },
   });
 }
 
