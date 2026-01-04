@@ -5,7 +5,7 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="text-center md:text-left">
             <span className="font-display text-xl font-semibold text-foreground">
-              PractoMind
+              PracMind
             </span>
             <p className="text-sm text-muted-foreground mt-1">
               Your intelligent workspace for practice management.
@@ -27,7 +27,18 @@ const Footer = () => {
         
         <div className="mt-8 pt-6 border-t border-border text-center">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} PractoMind. All rights reserved.
+            PracMind by{" "}
+            <a 
+              href="https://petaera.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="font-semibold text-foreground hover:text-primary transition-colors"
+            >
+              PETAERA TECHNOLOGIES
+            </a>
+          </p>
+          <p className="text-xs text-muted-foreground mt-2">
+            © {new Date().getFullYear()} All rights reserved.
           </p>
         </div>
       </div>

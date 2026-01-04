@@ -9,6 +9,7 @@ import { User, Lock, Bell, Download, Trash2, Shield, Clock, Calendar, DollarSign
 import { useState, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useTherapistSettings, useUpsertTherapistSettings } from "@/hooks/use-therapist-settings";
 import { updateTherapist } from "@/services/therapist.service";
 import { useToast } from "@/hooks/use-toast";
@@ -23,6 +24,7 @@ import {
 const Settings = () => {
   const { therapist } = useAuth();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
   const { data: settings, isLoading } = useTherapistSettings(therapist?.id);
   const { mutate: upsertSettings, isLoading: isSaving } = useUpsertTherapistSettings();
   const { data: specializationOptions, isLoading: isLoadingSpecializations } = useSpecializations();
@@ -445,7 +447,10 @@ const Settings = () => {
                 <Label htmlFor="theme">Theme</Label>
                 <Select 
                   value={formData.theme} 
-                  onValueChange={(value) => setFormData({ ...formData, theme: value })}
+                  onValueChange={(value) => {
+                    setFormData({ ...formData, theme: value });
+                    setTheme(value as "light" | "dark" | "auto");
+                  }}
                 >
                   <SelectTrigger className="rounded-xl h-11">
                     <SelectValue />
@@ -453,9 +458,16 @@ const Settings = () => {
                   <SelectContent>
                     <SelectItem value="light">Light</SelectItem>
                     <SelectItem value="dark">Dark</SelectItem>
-                    <SelectItem value="auto">Auto (System)</SelectItem>
+                    <SelectItem value="auto">Auto (Time-based)</SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground">
+                  {formData.theme === "auto" 
+                    ? "Automatically switches between light (6 AM - 6 PM) and dark (6 PM - 6 AM) themes" 
+                    : formData.theme === "dark" 
+                    ? "Dark theme for reduced eye strain" 
+                    : "Light theme for bright environments"}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -723,7 +735,7 @@ const Settings = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-xs text-muted-foreground leading-relaxed font-medium">
-                PractoMind is designed for your private use. No data is shared with external parties. You have full control over your records.
+                PracMind is designed for your private use. No data is shared with external parties. You have full control over your records.
               </p>
             </CardContent>
           </Card>
@@ -744,6 +756,17 @@ const Settings = () => {
             </CardContent>
           </Card>
         </div>
+      </div>
+
+      {/* Bottom Save Button */}
+      <div className="flex justify-end pt-4">
+        <Button 
+          onClick={handleSaveSettings} 
+          disabled={isSaving}
+          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl h-11 px-8"
+        >
+          {isSaving ? "Saving..." : "Save All Changes"}
+        </Button>
       </div>
     </DashboardLayout>
   );

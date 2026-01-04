@@ -35,7 +35,7 @@ const ImageShowcase = () => {
             Designed for Your Practice
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Whether you're in a private office or working from home, PractoMind adapts to how you work.
+            Whether you're in a private office or working from home, PracMind adapts to how you work.
           </p>
         </div>
 
