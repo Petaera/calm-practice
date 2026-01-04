@@ -97,18 +97,33 @@ const PublicModule = () => {
       }
 
       try {
-        const moduleResult = await getModuleByShareToken(shareToken);
-        if (moduleResult.error || !moduleResult.data) {
+        // Fetch module with nested resources in single query
+        const { supabase } = await import("@/lib/supabase/client");
+        const { data: moduleData, error: moduleError } = await supabase
+          .from("modules")
+          .select(`
+            *,
+            module_resources (
+              resources (*)
+            )
+          `)
+          .eq("share_token", shareToken)
+          .eq("is_public", true)
+          .single();
+
+        if (moduleError || !moduleData) {
           setError("Module not found or is no longer public");
           setIsLoading(false);
           return;
         }
 
-        setModule(moduleResult.data as Module);
+        setModule(moduleData as Module);
 
-        // Important: module membership is maintained via `module_resources` junction table.
-        const resourcesResult = await getResourcesInModule(moduleResult.data.id);
-        if (resourcesResult.data) setResources(resourcesResult.data as Resource[]);
+        // Extract resources from nested query
+        const resourcesList = (moduleData.module_resources || [])
+          .map((mr: any) => mr.resources)
+          .filter(Boolean);
+        setResources(resourcesList as Resource[]);
       } catch (err) {
         console.error("Error loading module:", err);
         setError("Failed to load module");

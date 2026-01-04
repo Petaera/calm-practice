@@ -76,33 +76,10 @@ export default function PublicAssessment() {
 
     const completionTime = startTime ? Math.round((Date.now() - startTime) / 1000) : undefined;
 
-    // Get therapist_id from assessment (we need to fetch it from the assessment data)
-    // Since we're using public submission, we need to get the therapist_id from the assessment
-    const { data: fullAssessment } = await import("@/services/assessments.service").then(
-      (m) => m.getAssessmentByShareToken(token!)
-    );
-
-    if (!fullAssessment) {
-      setValidationErrors({ submit: "Failed to load assessment data" });
-      return;
-    }
-
-    // We need the therapist_id - let's get it from the assessment via a direct query
-    const { supabase } = await import("@/lib/supabase/client");
-    const { data: assessmentData } = await supabase
-      .from("assessments")
-      .select("therapist_id")
-      .eq("id", assessment.id)
-      .single();
-
-    if (!assessmentData) {
-      setValidationErrors({ submit: "Failed to load assessment data" });
-      return;
-    }
-
+    // Use therapist_id from initial assessment payload (no extra query needed)
     const result = await createSubmission.mutate({
       assessmentId: assessment.id,
-      therapistId: assessmentData.therapist_id,
+      therapistId: assessment.therapist_id,
       clientName,
       clientEmail: clientEmail || undefined,
       responses: assessment.questions.map((q) => ({

@@ -12,64 +12,50 @@ import { toApiError } from "@/lib/supabase/api-types";
 
 /**
  * Create a new question and link it to an assessment
- * This creates both the question record and the assessment_question junction record
+ * Uses RPC for atomic transaction with auto-ordering
  */
 export async function createQuestionForAssessment(
   assessmentId: string,
   question: QuestionInsert,
   assessmentQuestionData?: Partial<Omit<AssessmentQuestionInsert, "assessment_id" | "question_id">>
 ): Promise<ApiResponse<{ question: Question; assessmentQuestion: AssessmentQuestion }>> {
-  // First, get the current max order for this assessment
-  const { data: existingQuestions, error: countError } = await supabase
-    .from("assessment_questions")
-    .select("question_order")
-    .eq("assessment_id", assessmentId)
-    .order("question_order", { ascending: false })
-    .limit(1);
+  // Call the RPC function that handles everything atomically
+  const { data: result, error } = await supabase
+    .rpc('create_question_for_assessment', {
+      p_assessment_id: assessmentId,
+      p_question: question,
+      p_assessment_question_data: assessmentQuestionData || {},
+    });
 
-  if (countError) {
-    return { data: null, error: toApiError(countError) };
+  if (error) {
+    return { data: null, error: toApiError(error) };
   }
 
-  const nextOrder = (existingQuestions?.[0]?.question_order ?? 0) + 1;
-
-  // Create the question
+  // Fetch the created question and assessment_question
   const { data: questionData, error: questionError } = await supabase
     .from("questions")
-    .insert(question)
-    .select()
+    .select("*")
+    .eq("id", result.question_id)
     .single();
 
   if (questionError) {
     return { data: null, error: toApiError(questionError) };
   }
 
-  // Link question to assessment
-  const assessmentQuestionInsert: AssessmentQuestionInsert = {
-    assessment_id: assessmentId,
-    question_id: questionData.id,
-    question_order: assessmentQuestionData?.question_order ?? nextOrder,
-    is_required: assessmentQuestionData?.is_required ?? true,
-    points: assessmentQuestionData?.points ?? 0,
-    ...assessmentQuestionData,
-  };
-
-  const { data: assessmentQuestionResult, error: linkError } = await supabase
+  const { data: assessmentQuestionDataResult, error: aqError } = await supabase
     .from("assessment_questions")
-    .insert(assessmentQuestionInsert)
-    .select()
+    .select("*")
+    .eq("id", result.assessment_question_id)
     .single();
 
-  if (linkError) {
-    // Rollback: delete the created question
-    await supabase.from("questions").delete().eq("id", questionData.id);
-    return { data: null, error: toApiError(linkError) };
+  if (aqError) {
+    return { data: null, error: toApiError(aqError) };
   }
 
   return {
     data: {
       question: questionData,
-      assessmentQuestion: assessmentQuestionResult,
+      assessmentQuestion: assessmentQuestionDataResult,
     },
     error: null,
   };
@@ -119,7 +105,7 @@ export async function updateAssessmentQuestion(
 
 /**
  * Delete a question from an assessment
- * This removes the link and optionally the question itself
+ * Trigger automatically handles reordering remaining questions
  */
 export async function deleteQuestionFromAssessment(
   assessmentQuestionId: string,
@@ -128,7 +114,7 @@ export async function deleteQuestionFromAssessment(
   // Get the assessment question to find the question_id
   const { data: aq, error: fetchError } = await supabase
     .from("assessment_questions")
-    .select("question_id, assessment_id, question_order")
+    .select("question_id")
     .eq("id", assessmentQuestionId)
     .single();
 
@@ -136,7 +122,7 @@ export async function deleteQuestionFromAssessment(
     return { data: null, error: toApiError(fetchError) };
   }
 
-  // Delete the link
+  // Delete the link (trigger will auto-reorder remaining questions)
   const { error: deleteError } = await supabase
     .from("assessment_questions")
     .delete()
@@ -159,50 +145,25 @@ export async function deleteQuestionFromAssessment(
     }
   }
 
-  // Reorder remaining questions
-  const { data: remainingQuestions, error: fetchRemainingError } = await supabase
-    .from("assessment_questions")
-    .select("id, question_order")
-    .eq("assessment_id", aq.assessment_id)
-    .gt("question_order", aq.question_order)
-    .order("question_order", { ascending: true });
-
-  if (!fetchRemainingError && remainingQuestions) {
-    // Update order of subsequent questions
-    for (const rq of remainingQuestions) {
-      await supabase
-        .from("assessment_questions")
-        .update({ question_order: rq.question_order - 1 })
-        .eq("id", rq.id);
-    }
-  }
-
   return { data: null, error: null };
 }
 
 /**
  * Reorder questions within an assessment
- * Takes an array of assessment_question_ids in the desired order
+ * Uses RPC for batch update in single query
  */
 export async function reorderQuestions(
   assessmentId: string,
   orderedAssessmentQuestionIds: string[]
 ): Promise<ApiResponse<null>> {
-  // Update each question with its new order
-  const updates = orderedAssessmentQuestionIds.map((id, index) =>
-    supabase
-      .from("assessment_questions")
-      .update({ question_order: index + 1, updated_at: new Date().toISOString() })
-      .eq("id", id)
-      .eq("assessment_id", assessmentId)
-  );
+  const { error } = await supabase
+    .rpc('reorder_questions', {
+      p_assessment_id: assessmentId,
+      p_ordered_ids: orderedAssessmentQuestionIds,
+    });
 
-  const results = await Promise.all(updates);
-
-  // Check for errors
-  const failedUpdate = results.find((r) => r.error);
-  if (failedUpdate?.error) {
-    return { data: null, error: toApiError(failedUpdate.error) };
+  if (error) {
+    return { data: null, error: toApiError(error) };
   }
 
   return { data: null, error: null };

@@ -162,6 +162,7 @@ export async function getAssessmentByShareToken(
     .from("assessments")
     .select(`
       id,
+      therapist_id,
       title,
       description,
       category,
@@ -219,6 +220,7 @@ export async function getAssessmentByShareToken(
 
   const publicData: PublicAssessmentData = {
     id: data.id,
+    therapist_id: data.therapist_id,
     title: data.title,
     description: data.description,
     category: data.category,
@@ -308,22 +310,12 @@ export async function revokeAssessmentShareToken(
 }
 
 /**
- * Delete an assessment and its related questions
+ * Delete an assessment
+ * CASCADE foreign key automatically deletes related assessment_questions
  */
 export async function deleteAssessment(
   assessmentId: string
 ): Promise<ApiResponse<null>> {
-  // First delete assessment_questions (junction table)
-  const { error: questionError } = await supabase
-    .from("assessment_questions")
-    .delete()
-    .eq("assessment_id", assessmentId);
-
-  if (questionError) {
-    return { data: null, error: toApiError(questionError) };
-  }
-
-  // Then delete the assessment
   const { error } = await supabase
     .from("assessments")
     .delete()

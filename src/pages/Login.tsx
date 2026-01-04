@@ -70,13 +70,15 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      // 1. Create auth user
+      // Create auth user (trigger will auto-create therapist profile and settings)
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: signupData.email,
         password: signupData.password,
         options: {
           data: {
             full_name: signupData.fullName,
+            practice_name: signupData.practiceName || null,
+            specialization: signupData.specialization || null,
           }
         }
       });
@@ -85,23 +87,6 @@ const Login = () => {
 
       if (!authData.user) {
         throw new Error("Failed to create user account");
-      }
-
-      // 2. Create therapist profile
-      const { error: therapistError } = await supabase
-        .from("therapists")
-        .insert({
-          id: authData.user.id,
-          email: signupData.email,
-          full_name: signupData.fullName,
-          practice_name: signupData.practiceName || null,
-          specialization: signupData.specialization || null,
-        });
-
-      if (therapistError) {
-        console.error("Error creating therapist profile:", therapistError);
-        // Note: Auth user was created, but therapist profile failed
-        // You might want to handle this case differently
       }
 
       toast({

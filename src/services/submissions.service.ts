@@ -111,72 +111,37 @@ export async function createSubmission(
 /**
  * Create a public submission (from share link - creates a temporary client record)
  * This is used when a client accesses an assessment via a public share link
+ * Uses RPC for atomic transaction
  */
 export async function createPublicSubmission(
   data: PublicSubmissionData
 ): Promise<ApiResponse<AssessmentSubmission>> {
-  // First, get the assessment to verify it exists and is active
-  const { data: assessment, error: assessmentError } = await supabase
-    .from("assessments")
-    .select("id, therapist_id, is_active")
-    .eq("id", data.assessmentId)
+  // Call the RPC function that handles everything in one transaction
+  const { data: submissionId, error } = await supabase
+    .rpc('create_public_submission', {
+      p_assessment_id: data.assessmentId,
+      p_client_name: data.clientName,
+      p_responses: data.responses,
+      p_client_email: data.clientEmail || null,
+      p_completion_time_seconds: data.completionTimeSeconds || null,
+    });
+
+  if (error) {
+    return { data: null, error: toApiError(error) };
+  }
+
+  // Fetch and return the created submission
+  const { data: submission, error: fetchError } = await supabase
+    .from("assessment_submissions")
+    .select("*")
+    .eq("id", submissionId)
     .single();
 
-  if (assessmentError || !assessment) {
-    return { data: null, error: assessmentError ? toApiError(assessmentError) : { message: "Assessment not found" } };
+  if (fetchError) {
+    return { data: null, error: toApiError(fetchError) };
   }
 
-  if (!assessment.is_active) {
-    return { data: null, error: { message: "This assessment is no longer accepting submissions" } };
-  }
-
-  // Check if a client with this email already exists for this therapist
-  let clientId: string | null = null;
-
-  if (data.clientEmail) {
-    const { data: existingClient } = await supabase
-      .from("clients")
-      .select("id")
-      .eq("therapist_id", data.therapistId)
-      .eq("email", data.clientEmail)
-      .single();
-
-    if (existingClient) {
-      clientId = existingClient.id;
-    }
-  }
-
-  // If no existing client, create a new one
-  if (!clientId) {
-    const clientIdCode = `ASSESS-${Date.now().toString(36).toUpperCase()}`;
-    const { data: newClient, error: clientError } = await supabase
-      .from("clients")
-      .insert({
-        therapist_id: data.therapistId,
-        client_id: clientIdCode,
-        full_name: data.clientName,
-        email: data.clientEmail,
-        status: "Active",
-        intake_notes: "Created via public assessment submission",
-      })
-      .select()
-      .single();
-
-    if (clientError) {
-      return { data: null, error: toApiError(clientError) };
-    }
-
-    clientId = newClient.id;
-  }
-
-  // Now create the submission
-  return createSubmission({
-    assessmentId: data.assessmentId,
-    clientId,
-    therapistId: data.therapistId,
-    responses: data.responses,
-    completionTimeSeconds: data.completionTimeSeconds,
-  });
+  return { data: submission, error: null };
 }
 
 /**
@@ -308,22 +273,12 @@ export async function updateSubmission(
 }
 
 /**
- * Delete a submission and all its responses
+ * Delete a submission
+ * CASCADE foreign key automatically deletes related assessment_responses
  */
 export async function deleteSubmission(
   submissionId: string
 ): Promise<ApiResponse<null>> {
-  // First delete all responses
-  const { error: responsesError } = await supabase
-    .from("assessment_responses")
-    .delete()
-    .eq("submission_id", submissionId);
-
-  if (responsesError) {
-    return { data: null, error: toApiError(responsesError) };
-  }
-
-  // Then delete the submission
   const { error } = await supabase
     .from("assessment_submissions")
     .delete()

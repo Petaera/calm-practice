@@ -34,28 +34,14 @@ export async function setTherapistSpecializations(
   therapistId: string,
   specializationIds: string[],
 ): Promise<ApiResponse<{ therapistId: string; specializationIds: string[] }>> {
-  // Simple approach: clear then insert. (Non-atomic but fine for settings.)
-  const { error: delError } = await supabase
-    .from("therapist_specializations")
-    .delete()
-    .eq("therapist_id", therapistId);
+  // Use RPC for atomic transaction
+  const { error } = await supabase
+    .rpc('set_therapist_specializations', {
+      p_therapist_id: therapistId,
+      p_specialization_ids: specializationIds,
+    });
 
-  if (delError) return { data: null, error: toApiError(delError) };
-
-  if (specializationIds.length === 0) {
-    return { data: { therapistId, specializationIds: [] }, error: null };
-  }
-
-  const rows = specializationIds.map((specialization_id) => ({
-    therapist_id: therapistId,
-    specialization_id,
-  }));
-
-  const { error: insError } = await supabase
-    .from("therapist_specializations")
-    .insert(rows);
-
-  if (insError) return { data: null, error: toApiError(insError) };
+  if (error) return { data: null, error: toApiError(error) };
 
   return { data: { therapistId, specializationIds }, error: null };
 }

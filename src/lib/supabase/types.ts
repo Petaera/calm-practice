@@ -1578,6 +1578,7 @@ export interface AssessmentWithQuestions extends Assessment {
 // Extended type for public assessment access
 export interface PublicAssessmentData {
   id: string;
+  therapist_id: string;
   title: string;
   description: string | null;
   category: string | null;

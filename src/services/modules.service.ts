@@ -281,22 +281,18 @@ export async function toggleModuleActive(
 
 /**
  * Reorder modules
+ * Uses RPC for batch update in single query
  */
 export async function reorderModules(
   moduleOrders: { id: string; display_order: number }[]
 ): Promise<ApiResponse<null>> {
-  const updates = moduleOrders.map(({ id, display_order }) =>
-    supabase
-      .from("modules")
-      .update({ display_order, updated_at: new Date().toISOString() })
-      .eq("id", id)
-  );
+  const { error } = await supabase
+    .rpc('reorder_modules', {
+      p_module_orders: moduleOrders,
+    });
 
-  const results = await Promise.all(updates);
-  const firstError = results.find((r) => r.error);
-
-  if (firstError?.error) {
-    return { data: null, error: toApiError(firstError.error) };
+  if (error) {
+    return { data: null, error: toApiError(error) };
   }
 
   return { data: null, error: null };
