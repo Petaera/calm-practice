@@ -161,4 +161,11 @@ export {
   useCompleteAssignment as useCompleteModuleAssignment,
 } from "./use-module-assignments";
 
+// Specializations
+export {
+  useSpecializations,
+  useTherapistSpecializations,
+  useSetTherapistSpecializations,
+} from "./use-specializations";
+
 

@@ -1227,6 +1227,63 @@ export type Database = {
         };
         Relationships: [];
       };
+      specializations: {
+        Row: {
+          created_at: string;
+          id: string;
+          is_active: boolean;
+          name: string;
+          sort_order: number;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          name: string;
+          sort_order?: number;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          name?: string;
+          sort_order?: number;
+        };
+        Relationships: [];
+      };
+      therapist_specializations: {
+        Row: {
+          created_at: string;
+          specialization_id: string;
+          therapist_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          specialization_id: string;
+          therapist_id: string;
+        };
+        Update: {
+          created_at?: string;
+          specialization_id?: string;
+          therapist_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "therapist_specializations_specialization_id_fkey";
+            columns: ["specialization_id"];
+            isOneToOne: false;
+            referencedRelation: "specializations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "therapist_specializations_therapist_id_fkey";
+            columns: ["therapist_id"];
+            isOneToOne: false;
+            referencedRelation: "therapists";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       therapist_settings: {
         Row: {
           appointment_reminders: boolean | null;
@@ -1422,6 +1479,14 @@ export type TherapistUpdate = TablesUpdate<"therapists">;
 export type TherapistSettings = Tables<"therapist_settings">;
 export type TherapistSettingsInsert = TablesInsert<"therapist_settings">;
 export type TherapistSettingsUpdate = TablesUpdate<"therapist_settings">;
+
+export type Specialization = Tables<"specializations">;
+export type SpecializationInsert = TablesInsert<"specializations">;
+export type SpecializationUpdate = TablesUpdate<"specializations">;
+
+export type TherapistSpecialization = Tables<"therapist_specializations">;
+export type TherapistSpecializationInsert = TablesInsert<"therapist_specializations">;
+export type TherapistSpecializationUpdate = TablesUpdate<"therapist_specializations">;
 
 export type Client = Tables<"clients">;
 export type ClientInsert = TablesInsert<"clients">;

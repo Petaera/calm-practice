@@ -13,12 +13,22 @@ import { useTherapistSettings, useUpsertTherapistSettings } from "@/hooks/use-th
 import { updateTherapist } from "@/services/therapist.service";
 import { useToast } from "@/hooks/use-toast";
 import type { TherapistSettingsInsert, TherapistUpdate } from "@/lib/supabase";
+import { SpecializationMultiSelect } from "@/components/SpecializationMultiSelect";
+import {
+  useSpecializations,
+  useTherapistSpecializations,
+  useSetTherapistSpecializations,
+} from "@/hooks/use-specializations";
 
 const Settings = () => {
   const { therapist } = useAuth();
   const { toast } = useToast();
   const { data: settings, isLoading } = useTherapistSettings(therapist?.id);
   const { mutate: upsertSettings, isLoading: isSaving } = useUpsertTherapistSettings();
+  const { data: specializationOptions, isLoading: isLoadingSpecializations } = useSpecializations();
+  const { data: therapistSpecializations } = useTherapistSpecializations(therapist?.id);
+  const { mutate: setTherapistSpecializations, isLoading: isSavingSpecializations } =
+    useSetTherapistSpecializations();
 
   // Therapist profile form state
   const [profileData, setProfileData] = useState({
@@ -26,9 +36,10 @@ const Settings = () => {
     email: "",
     practice_name: "",
     license_number: "",
-    specialization: "",
     phone: "",
   });
+  const [selectedSpecializationIds, setSelectedSpecializationIds] = useState<string[]>([]);
+  const [hasInitializedSpecializations, setHasInitializedSpecializations] = useState(false);
 
   // Settings form state
   const [formData, setFormData] = useState<Partial<TherapistSettingsInsert>>({
@@ -66,11 +77,23 @@ const Settings = () => {
         email: therapist.email || "",
         practice_name: therapist.practice_name || "",
         license_number: therapist.license_number || "",
-        specialization: therapist.specialization || "",
         phone: therapist.phone || "",
       });
     }
   }, [therapist]);
+
+  // Load therapist specialization selections when fetched
+  useEffect(() => {
+    if (hasInitializedSpecializations) return;
+    if (!therapist?.id) return;
+
+    if (therapistSpecializations) {
+      setSelectedSpecializationIds(
+        therapistSpecializations.map((row) => row.specialization_id),
+      );
+      setHasInitializedSpecializations(true);
+    }
+  }, [hasInitializedSpecializations, therapist?.id, therapistSpecializations]);
 
   // Load settings when they're fetched
   useEffect(() => {
@@ -122,11 +145,27 @@ const Settings = () => {
     }
 
     try {
+      // Persist specialization selections (multi-select)
+      const specResult = await setTherapistSpecializations({
+        therapistId: therapist.id,
+        specializationIds: selectedSpecializationIds,
+      });
+      if (!specResult) {
+        throw new Error("Failed to save specializations. Please try again.");
+      }
+
+      // Keep legacy single-field specialization string in sync for compatibility
+      const specializationSummary =
+        (specializationOptions ?? [])
+          .filter((s) => selectedSpecializationIds.includes(s.id))
+          .map((s) => s.name)
+          .join(", ") || null;
+
       const updates: TherapistUpdate = {
         full_name: profileData.full_name,
         practice_name: profileData.practice_name,
         license_number: profileData.license_number,
-        specialization: profileData.specialization,
+        specialization: specializationSummary,
         phone: profileData.phone,
       };
 
@@ -228,13 +267,15 @@ const Settings = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="specialization">Specialization</Label>
-                  <Input 
-                    id="specialization" 
-                    value={profileData.specialization} 
-                    onChange={(e) => setProfileData({ ...profileData, specialization: e.target.value })}
-                    className="rounded-xl border-border/50 h-11" 
-                  />
+                  <Label htmlFor="specializations">Specializations</Label>
+                  <div id="specializations">
+                    <SpecializationMultiSelect
+                      options={(specializationOptions ?? []).map((s) => ({ id: s.id, name: s.name }))}
+                      value={selectedSpecializationIds}
+                      onChange={setSelectedSpecializationIds}
+                      disabled={isLoadingSpecializations || isSavingSpecializations}
+                    />
+                  </div>
                 </div>
               </div>
               <div className="grid md:grid-cols-2 gap-4">

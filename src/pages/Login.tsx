@@ -104,17 +104,6 @@ const Login = () => {
         // You might want to handle this case differently
       }
 
-      // 3. Create default therapist settings
-      const { error: settingsError } = await supabase
-        .from("therapist_settings")
-        .insert({
-          therapist_id: authData.user.id,
-        });
-
-      if (settingsError) {
-        console.error("Error creating therapist settings:", settingsError);
-      }
-
       toast({
         title: "Account created!",
         description: "Please check your email to verify your account.",
