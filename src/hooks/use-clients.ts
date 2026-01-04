@@ -117,7 +117,7 @@ export function useDeleteClient() {
     return deleteClient(clientId);
   }, []);
 
-  return useSupabaseMutation<null, string>(mutationFn);
+  return useSupabaseMutation<boolean, string>(mutationFn);
 }
 
 /**

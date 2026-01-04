@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +31,7 @@ import {
   List,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   useModulesWithCounts,
   useCreateModule,
@@ -78,11 +79,14 @@ import { toast } from "@/hooks/use-toast";
 
 const Resources = () => {
   const { therapist } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
   const [selectedResourceType, setSelectedResourceType] = useState<string>("all");
   const [selectedTag, setSelectedTag] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [prefillAssignClientId, setPrefillAssignClientId] = useState<string | undefined>();
 
   // Module state
   const [moduleFormOpen, setModuleFormOpen] = useState(false);
@@ -287,6 +291,23 @@ const Resources = () => {
   const resourceAssignedClientIds = useMemo(() => {
     return resourceAssignedClients.map((ac) => ac.client_id);
   }, [resourceAssignedClients]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const clientId = params.get("assignClientId") || undefined;
+    setPrefillAssignClientId(clientId);
+  }, [location.search]);
+
+  const clearAssignClientIdParam = () => {
+    const params = new URLSearchParams(location.search);
+    if (!params.has("assignClientId")) return;
+    params.delete("assignClientId");
+    const nextSearch = params.toString();
+    navigate(
+      { pathname: location.pathname, search: nextSearch ? `?${nextSearch}` : "" },
+      { replace: true }
+    );
+  };
 
   if (!therapist) {
     return (
@@ -555,6 +576,7 @@ const Resources = () => {
                     onAssign={(r) => {
                       setAssigningResource(r);
                       setAssignResourceDialogOpen(true);
+                      clearAssignClientIdParam();
                     }}
                   />
                 ))}
@@ -587,6 +609,7 @@ const Resources = () => {
                     onAssign={(r) => {
                       setAssigningResource(r);
                       setAssignResourceDialogOpen(true);
+                      clearAssignClientIdParam();
                     }}
                   />
                 ))}
@@ -640,6 +663,7 @@ const Resources = () => {
           resource={assigningResource}
           clients={clients}
           assignedClientIds={resourceAssignedClientIds}
+          defaultSelectedClientIds={prefillAssignClientId ? [prefillAssignClientId] : []}
           isLoadingClients={isLoadingClients}
           onAssign={handleAssignResourceToClients}
         />

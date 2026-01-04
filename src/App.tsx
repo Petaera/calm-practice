@@ -19,6 +19,7 @@ import Reports from "./pages/dashboard/Reports";
 import Settings from "./pages/dashboard/Settings";
 import NotFound from "./pages/NotFound";
 import PublicAssessment from "./pages/PublicAssessment";
+import PublicModule from "./pages/PublicModule";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,8 @@ const App = () => (
             <Route path="/dashboard/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             {/* Public assessment route - no authentication required */}
             <Route path="/assessment/:token" element={<PublicAssessment />} />
+            {/* Public module route - no authentication required */}
+            <Route path="/public/module/:shareToken" element={<PublicModule />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

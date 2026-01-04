@@ -25,6 +25,7 @@ interface AssignResourceDialogProps {
   resource: Resource | null;
   clients: Client[];
   assignedClientIds: string[];
+  defaultSelectedClientIds?: string[];
   isLoadingClients: boolean;
   onAssign: (resourceId: string, clientIds: string[], notes?: string) => Promise<void>;
 }
@@ -35,6 +36,7 @@ export function AssignResourceDialog({
   resource,
   clients,
   assignedClientIds,
+  defaultSelectedClientIds = [],
   isLoadingClients,
   onAssign,
 }: AssignResourceDialogProps) {
@@ -45,10 +47,13 @@ export function AssignResourceDialog({
   // Initialize selected clients when dialog opens
   useEffect(() => {
     if (open) {
-      setSelectedClientIds(assignedClientIds);
+      const combined = Array.from(
+        new Set([...(assignedClientIds || []), ...(defaultSelectedClientIds || [])])
+      );
+      setSelectedClientIds(combined);
       setNotes("");
     }
-  }, [open, assignedClientIds]);
+  }, [open, assignedClientIds, defaultSelectedClientIds]);
 
   if (!resource) return null;
 

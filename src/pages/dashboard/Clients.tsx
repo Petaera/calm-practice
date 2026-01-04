@@ -3,7 +3,19 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Search, Filter, MoreVertical, Calendar, Edit, Trash2, Archive, ArchiveRestore } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Filter,
+  MoreVertical,
+  Calendar,
+  Edit,
+  Trash2,
+  Archive,
+  ArchiveRestore,
+  FileText,
+  StickyNote,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -15,11 +27,12 @@ import {
   useArchiveClient,
   useUnarchiveClient,
   useDeleteClient,
+  useCreateNote,
 } from "@/hooks";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { ClientFormDialog, type ClientFormData } from "@/components/clients";
-import type { ClientStatus, ClientInsert, Client, ClientUpdate } from "@/lib/supabase";
+import type { ClientStatus, ClientInsert, Client, ClientUpdate, NoteInsert, NoteType } from "@/lib/supabase";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +51,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Utility Functions
 const generateClientId = (): string => {
@@ -110,6 +141,13 @@ const Clients = () => {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
+  const [isCreateNoteDialogOpen, setIsCreateNoteDialogOpen] = useState(false);
+  const [noteClient, setNoteClient] = useState<Client | null>(null);
+  const [noteTitle, setNoteTitle] = useState("");
+  const [noteContent, setNoteContent] = useState("");
+  const [noteType, setNoteType] = useState<NoteType>("general");
+  const [noteTagsText, setNoteTagsText] = useState("");
+  const [noteImportant, setNoteImportant] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -145,12 +183,14 @@ const Clients = () => {
     sort: { column: "created_at", ascending: false },
   });
 
-  const { data: clientCounts } = useClientCountByStatus(therapist?.id);
+  const { data: clientCounts, refetch: refetchClientCounts } =
+    useClientCountByStatus(therapist?.id);
   const createClientMutation = useCreateClient();
   const updateClientMutation = useUpdateClient();
   const archiveClientMutation = useArchiveClient();
   const unarchiveClientMutation = useUnarchiveClient();
   const deleteClientMutation = useDeleteClient();
+  const createNoteMutation = useCreateNote();
 
   // Computed values
   const totalClients = useMemo(() => {
@@ -275,12 +315,85 @@ const Clients = () => {
     setDeleteDialogOpen(true);
   };
 
+  const handleQuickLogSession = (client: Client) => {
+    navigate(`/dashboard/sessions?new=1&clientId=${encodeURIComponent(client.id)}`);
+  };
+
+  const handleQuickAssignResource = (client: Client) => {
+    navigate(`/dashboard/resources?assignClientId=${encodeURIComponent(client.id)}`);
+  };
+
+  const handleQuickAddNote = (client: Client) => {
+    setNoteClient(client);
+    setNoteTitle("");
+    setNoteContent("");
+    setNoteType("general");
+    setNoteTagsText("");
+    setNoteImportant(false);
+    setIsCreateNoteDialogOpen(true);
+  };
+
+  const parseTags = (raw: string): string[] => {
+    return raw
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+  };
+
+  const handleCreateNote = async () => {
+    if (!therapist?.id) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create a note",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!noteClient) return;
+    if (!noteTitle.trim() || !noteContent.trim()) {
+      toast({
+        title: "Missing information",
+        description: "Please add a title and content for the note.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const tags = parseTags(noteTagsText);
+    const payload: NoteInsert = {
+      therapist_id: therapist.id,
+      client_id: noteClient.id,
+      title: noteTitle.trim(),
+      content: noteContent.trim(),
+      note_type: noteType,
+      is_important: noteImportant,
+      is_archived: false,
+      tags: tags.length > 0 ? tags : null,
+    };
+
+    const result = await createNoteMutation.mutate(payload);
+    if (result) {
+      toast({
+        title: "Success",
+        description: `Note added for ${noteClient.full_name}`,
+      });
+      setIsCreateNoteDialogOpen(false);
+      setNoteClient(null);
+    } else if (createNoteMutation.error) {
+      toast({
+        title: "Error",
+        description: createNoteMutation.error.message || "Failed to create note",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleConfirmDelete = async () => {
     if (!clientToDelete) return;
 
     const result = await deleteClientMutation.mutate(clientToDelete.id);
 
-    if (result !== null) {
+    if (result) {
       toast({
         title: "Success",
         description: `Client ${clientToDelete.full_name} has been permanently deleted`,
@@ -288,6 +401,7 @@ const Clients = () => {
       setDeleteDialogOpen(false);
       setClientToDelete(null);
       refetch();
+      refetchClientCounts();
     } else if (deleteClientMutation.error) {
       toast({
         title: "Error",
@@ -421,6 +535,9 @@ const Clients = () => {
             onArchiveClick={handleArchiveClient}
             onUnarchiveClick={handleUnarchiveClient}
             onDeleteClick={handleDeleteClick}
+        onLogSession={handleQuickLogSession}
+        onAssignResource={handleQuickAssignResource}
+        onAddNote={handleQuickAddNote}
           />
           
           {/* Pagination */}
@@ -484,6 +601,104 @@ const Clients = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Create Note Dialog */}
+      <Dialog
+        open={isCreateNoteDialogOpen}
+        onOpenChange={(open) => {
+          setIsCreateNoteDialogOpen(open);
+          if (!open) setNoteClient(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-[560px]">
+          <DialogHeader>
+            <DialogTitle>Create note</DialogTitle>
+            <DialogDescription>
+              {noteClient ? (
+                <>
+                  Add a quick note for{" "}
+                  <span className="font-semibold">{noteClient.full_name}</span>.
+                </>
+              ) : (
+                "Add a quick note."
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="note-title">Title</Label>
+              <Input
+                id="note-title"
+                value={noteTitle}
+                onChange={(e) => setNoteTitle(e.target.value)}
+                placeholder="e.g. Key observation, homework, follow-up..."
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="note-type">Type</Label>
+              <Select
+                value={noteType}
+                onValueChange={(value) => setNoteType(value as NoteType)}
+              >
+                <SelectTrigger id="note-type">
+                  <SelectValue placeholder="Select note type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="general">General</SelectItem>
+                  <SelectItem value="clinical">Clinical</SelectItem>
+                  <SelectItem value="observation">Observation</SelectItem>
+                  <SelectItem value="resource">Resource</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="note-content">Content</Label>
+              <Textarea
+                id="note-content"
+                value={noteContent}
+                onChange={(e) => setNoteContent(e.target.value)}
+                placeholder="Write your note..."
+                rows={6}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="note-tags">Tags (comma separated)</Label>
+              <Input
+                id="note-tags"
+                value={noteTagsText}
+                onChange={(e) => setNoteTagsText(e.target.value)}
+                placeholder="e.g. anxiety, CBT, follow-up"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="note-important"
+                checked={noteImportant}
+                onCheckedChange={(v) => setNoteImportant(Boolean(v))}
+              />
+              <Label htmlFor="note-important">Mark as important</Label>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsCreateNoteDialogOpen(false)}
+              disabled={createNoteMutation.isLoading}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleCreateNote} disabled={createNoteMutation.isLoading}>
+              {createNoteMutation.isLoading ? "Saving..." : "Save note"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
@@ -497,6 +712,9 @@ interface ClientListProps {
   onArchiveClick: (client: Client) => void;
   onUnarchiveClick: (client: Client) => void;
   onDeleteClick: (client: Client) => void;
+  onLogSession: (client: Client) => void;
+  onAssignResource: (client: Client) => void;
+  onAddNote: (client: Client) => void;
 }
 
 const ClientList = ({
@@ -506,6 +724,9 @@ const ClientList = ({
   onArchiveClick,
   onUnarchiveClick,
   onDeleteClick,
+  onLogSession,
+  onAssignResource,
+  onAddNote,
 }: ClientListProps) => (
   <div className="grid gap-4">
     {clients.map((client) => (
@@ -591,7 +812,47 @@ const ClientList = ({
                   {client.status || "Active"}
                 </Badge>
 
-                <div className="flex gap-1">
+                <div className="flex items-center gap-1">
+                  {/* Quick actions (desktop) */}
+                  <div className="hidden md:flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 rounded-xl text-muted-foreground hover:bg-muted-foreground/10 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onLogSession(client);
+                      }}
+                      title="Log session"
+                    >
+                      <Calendar className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 rounded-xl text-muted-foreground hover:bg-muted-foreground/10 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAssignResource(client);
+                      }}
+                      title="Assign resource"
+                    >
+                      <FileText className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 rounded-xl text-muted-foreground hover:bg-muted-foreground/10 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAddNote(client);
+                      }}
+                      title="Add note"
+                    >
+                      <StickyNote className="w-4 h-4" />
+                    </Button>
+                  </div>
+
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -606,6 +867,37 @@ const ClientList = ({
                     <DropdownMenuContent align="end" className="w-48">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onLogSession(client);
+                        }}
+                        className="cursor-pointer md:hidden"
+                      >
+                        <Calendar className="w-4 h-4 mr-2" />
+                        Log Session
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAssignResource(client);
+                        }}
+                        className="cursor-pointer md:hidden"
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Assign Resource
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAddNote(client);
+                        }}
+                        className="cursor-pointer md:hidden"
+                      >
+                        <StickyNote className="w-4 h-4 mr-2" />
+                        Add Note
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator className="md:hidden" />
                       <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();

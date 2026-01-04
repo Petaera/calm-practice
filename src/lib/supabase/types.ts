@@ -958,6 +958,79 @@ export type Database = {
           }
         ];
       };
+      soap_notes: {
+        Row: {
+          id: string;
+          therapist_id: string;
+          client_id: string;
+          assessment_submission_id: string | null;
+          title: string;
+          subjective: Json;
+          objective: Json;
+          assessment: Json;
+          plan: Json;
+          tags: string[] | null;
+          is_important: boolean;
+          is_archived: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          therapist_id: string;
+          client_id: string;
+          assessment_submission_id?: string | null;
+          title: string;
+          subjective?: Json;
+          objective?: Json;
+          assessment?: Json;
+          plan?: Json;
+          tags?: string[] | null;
+          is_important?: boolean;
+          is_archived?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          therapist_id?: string;
+          client_id?: string;
+          assessment_submission_id?: string | null;
+          title?: string;
+          subjective?: Json;
+          objective?: Json;
+          assessment?: Json;
+          plan?: Json;
+          tags?: string[] | null;
+          is_important?: boolean;
+          is_archived?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "soap_notes_therapist_id_fkey";
+            columns: ["therapist_id"];
+            isOneToOne: false;
+            referencedRelation: "therapists";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "soap_notes_client_id_fkey";
+            columns: ["client_id"];
+            isOneToOne: false;
+            referencedRelation: "clients";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "soap_notes_assessment_submission_id_fkey";
+            columns: ["assessment_submission_id"];
+            isOneToOne: false;
+            referencedRelation: "assessment_submissions";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       sessions: {
         Row: {
           client_id: string;
@@ -1361,6 +1434,9 @@ export type TaskUpdate = TablesUpdate<"tasks">;
 export type Note = Tables<"notes">;
 export type NoteInsert = TablesInsert<"notes">;
 export type NoteUpdate = TablesUpdate<"notes">;
+export type SoapNote = Tables<"soap_notes">;
+export type SoapNoteInsert = TablesInsert<"soap_notes">;
+export type SoapNoteUpdate = TablesUpdate<"soap_notes">;
 
 export type Appointment = Tables<"appointments">;
 export type AppointmentInsert = TablesInsert<"appointments">;

@@ -66,6 +66,21 @@ export type {
   NoteWithClient,
 } from "./notes.service";
 
+// SOAP Notes Service
+export {
+  getSoapNotes,
+  createSoapNote,
+  updateSoapNote,
+  archiveSoapNote,
+  unarchiveSoapNote,
+  toggleSoapNoteImportant,
+} from "./soap-notes.service";
+export type {
+  SoapNoteFilters,
+  SoapNoteQueryOptions,
+  SoapNoteWithLinks,
+} from "./soap-notes.service";
+
 // Therapist Service
 export {
   getTherapistById,

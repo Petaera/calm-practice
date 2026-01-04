@@ -59,6 +59,7 @@ const Sessions = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [prefillClientId, setPrefillClientId] = useState<string | undefined>();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<SessionWithClient | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -69,10 +70,13 @@ const Sessions = () => {
     const shouldOpenCreate = params.get("new") === "1";
     if (!shouldOpenCreate) return;
 
+    const clientId = params.get("clientId") || undefined;
+    setPrefillClientId(clientId);
     setIsCreateDialogOpen(true);
 
     // remove flag so refresh doesn't keep reopening
     params.delete("new");
+    params.delete("clientId");
     const nextSearch = params.toString();
     navigate(
       {
@@ -340,11 +344,15 @@ const Sessions = () => {
             </Button>
           }
           open={isCreateDialogOpen}
-          onOpenChange={setIsCreateDialogOpen}
+          onOpenChange={(open) => {
+            setIsCreateDialogOpen(open);
+            if (!open) setPrefillClientId(undefined);
+          }}
           onSubmit={handleCreateSession}
           isSubmitting={createSessionMutation.isLoading}
           mode="create"
           clients={clientsData?.data.map(c => ({ id: c.id, full_name: c.full_name })) || []}
+          initialData={prefillClientId ? { client_id: prefillClientId } : undefined}
         />
       </div>
 

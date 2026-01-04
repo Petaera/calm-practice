@@ -163,14 +163,14 @@ export async function unarchiveClient(
  */
 export async function deleteClient(
   clientId: string
-): Promise<ApiResponse<null>> {
+): Promise<ApiResponse<boolean>> {
   const { error } = await supabase.from("clients").delete().eq("id", clientId);
 
   if (error) {
     return { data: null, error: toApiError(error) };
   }
 
-  return { data: null, error: null };
+  return { data: true, error: null };
 }
 
 /**

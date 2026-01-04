@@ -103,6 +103,19 @@ export {
   useCreatePublicSubmission,
 } from "./use-questions";
 
+// Submission helpers
+export { useSubmissionsByClient } from "./use-submissions";
+
+// SOAP notes
+export {
+  useSoapNotes,
+  useCreateSoapNote,
+  useUpdateSoapNote,
+  useArchiveSoapNote,
+  useUnarchiveSoapNote,
+  useToggleSoapNoteImportant,
+} from "./use-soap-notes";
+
 // Existing hooks
 export { useIsMobile } from "./use-mobile";
 export { useToast, toast } from "./use-toast";
