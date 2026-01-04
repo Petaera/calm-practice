@@ -37,9 +37,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+      
+      // Handle password recovery event
+      if (event === "PASSWORD_RECOVERY") {
+        // User is in password recovery mode
+        // The ResetPassword page will handle the actual password update
+        setLoading(false);
+        return;
+      }
       
       if (session?.user) {
         fetchTherapist(session.user.email!);

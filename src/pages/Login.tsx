@@ -6,6 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { AlertCircle, Loader2 } from "lucide-react";
 import Footer from "@/components/landing/Footer";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,6 +37,10 @@ const Login = () => {
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
+  const [isSendingReset, setIsSendingReset] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,10 +83,12 @@ const Login = () => {
 
     try {
       // Create auth user (trigger will auto-create therapist profile and settings)
+      const redirectUrl = `${window.location.origin}/auth/verify`;
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: signupData.email,
         password: signupData.password,
         options: {
+          emailRedirectTo: redirectUrl,
           data: {
             full_name: signupData.fullName,
             practice_name: signupData.practiceName || null,
@@ -107,6 +121,49 @@ const Login = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!forgotPasswordEmail) {
+      setError("Please enter your email address");
+      return;
+    }
+
+    setIsSendingReset(true);
+
+    try {
+      const redirectUrl = `${window.location.origin}/reset-password`;
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+        forgotPasswordEmail,
+        {
+          redirectTo: redirectUrl,
+        }
+      );
+
+      if (resetError) throw resetError;
+
+      setResetEmailSent(true);
+      toast({
+        title: "Reset email sent!",
+        description: "Please check your email for password reset instructions.",
+      });
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("Forgot password error:", err);
+      setError(error.message || "Failed to send reset email. Please try again.");
+    } finally {
+      setIsSendingReset(false);
+    }
+  };
+
+  const handleCloseForgotPassword = () => {
+    setForgotPasswordOpen(false);
+    setForgotPasswordEmail("");
+    setResetEmailSent(false);
+    setError(null);
   };
 
   return (
@@ -186,9 +243,13 @@ const Login = () => {
                         <input type="checkbox" className="rounded" />
                         <span className="text-muted-foreground">Remember me</span>
                       </label>
-                      <a href="#" className="text-primary hover:underline">
+                      <button
+                        type="button"
+                        onClick={() => setForgotPasswordOpen(true)}
+                        className="text-primary hover:underline"
+                      >
                         Forgot password?
-                      </a>
+                      </button>
                     </div>
                     <Button
                       type="submit"
@@ -337,6 +398,69 @@ const Login = () => {
         </div>
       </main>
       <Footer />
+
+      {/* Forgot Password Dialog */}
+      <Dialog open={forgotPasswordOpen} onOpenChange={handleCloseForgotPassword}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+            <DialogDescription>
+              {resetEmailSent
+                ? "We've sent you an email with instructions to reset your password."
+                : "Enter your email address and we'll send you a link to reset your password."}
+            </DialogDescription>
+          </DialogHeader>
+          {!resetEmailSent ? (
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="forgot-email">Email</Label>
+                <Input
+                  id="forgot-email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={forgotPasswordEmail}
+                  onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                  required
+                  disabled={isSendingReset}
+                  className="h-11"
+                />
+              </div>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCloseForgotPassword}
+                  disabled={isSendingReset}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSendingReset}>
+                  {isSendingReset ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    "Send Reset Link"
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          ) : (
+            <DialogFooter>
+              <Button onClick={handleCloseForgotPassword} className="w-full">
+                Close
+              </Button>
+            </DialogFooter>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

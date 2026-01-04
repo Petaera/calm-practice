@@ -21,6 +21,8 @@ import Settings from "./pages/dashboard/Settings";
 import NotFound from "./pages/NotFound";
 import PublicAssessment from "./pages/PublicAssessment";
 import PublicModule from "./pages/PublicModule";
+import EmailVerification from "./pages/EmailVerification";
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +37,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/auth/verify" element={<EmailVerification />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/dashboard" element={<ProtectedRoute><Overview /></ProtectedRoute>} />
             <Route path="/dashboard/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
             <Route path="/dashboard/sessions" element={<ProtectedRoute><Sessions /></ProtectedRoute>} />
