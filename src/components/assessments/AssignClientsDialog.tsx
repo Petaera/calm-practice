@@ -69,11 +69,11 @@ export function AssignClientsDialog({
 
   // Fetch all clients
   const { data: clientsData, isLoading: isLoadingClients } = useClients(therapistId, {
-    status: "Active",
+    filters: { status: "Active" },
   });
 
   // Fetch already assigned clients
-  const { data: assignedClients, refetch: refetchAssignedClients } = useAssignedClients(assessmentId);
+  const { data: assignedClients, refetch: refetchAssignedClients, isLoading: isLoadingAssignedClients } = useAssignedClients(assessmentId);
 
   const assignClientsMutation = useAssignClients();
 
@@ -192,6 +192,71 @@ export function AssignClientsDialog({
             />
           </div>
 
+          {/* Already Assigned Clients Section */}
+          {isLoadingAssignedClients ? (
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Already Assigned</Label>
+              <div className="h-[120px] border rounded-lg bg-muted/30 flex items-center justify-center">
+                <div className="text-sm text-muted-foreground">Loading assigned clients...</div>
+              </div>
+            </div>
+          ) : assignedClients && assignedClients.length > 0 ? (
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">
+                Already Assigned ({assignedClients.length})
+              </Label>
+              <ScrollArea className="h-[120px] border rounded-lg bg-muted/30">
+                <div className="p-2 space-y-1">
+                  {assignedClients
+                    .filter((assignment) => {
+                      const client = assignment.clients;
+                      const clientData = Array.isArray(client) ? client[0] : client;
+                      return clientData && clientData.full_name;
+                    })
+                    .map((assignment) => {
+                      const client = assignment.clients;
+                      // Handle both object and array formats (Supabase can return either)
+                      const clientData = Array.isArray(client) ? client[0] : client;
+                      if (!clientData || !clientData.full_name) return null;
+                      
+                      return (
+                        <div
+                          key={assignment.id}
+                          className="flex items-center gap-3 p-2 rounded-lg bg-background"
+                        >
+                          <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary/10 text-primary shrink-0">
+                            <User className="h-4 w-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{clientData.full_name}</p>
+                            {clientData.email && (
+                              <p className="text-xs text-muted-foreground truncate">{clientData.email}</p>
+                            )}
+                          </div>
+                          <Badge variant="outline" className="text-xs shrink-0">
+                            {assignment.status || "pending"}
+                          </Badge>
+                        </div>
+                      );
+                    })}
+                  {assignedClients.filter((assignment) => {
+                    const client = assignment.clients;
+                    const clientData = Array.isArray(client) ? client[0] : client;
+                    return !clientData || !clientData.full_name;
+                  }).length > 0 && (
+                    <div className="text-xs text-muted-foreground p-2">
+                      {assignedClients.filter((assignment) => {
+                        const client = assignment.clients;
+                        const clientData = Array.isArray(client) ? client[0] : client;
+                        return !clientData || !clientData.full_name;
+                      }).length} assignment(s) without client data
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
+          ) : null}
+
           {/* Selection controls */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -218,7 +283,7 @@ export function AssignClientsDialog({
             )}
           </div>
 
-          {/* Client list */}
+          {/* Available Clients list */}
           <ScrollArea className="h-[200px] border rounded-lg">
             <div className="p-2 space-y-1">
               {isLoadingClients ? (
