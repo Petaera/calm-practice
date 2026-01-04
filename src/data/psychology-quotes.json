@@ -1,0 +1,605 @@
+{
+  "psychology_quotes": [
+    {
+      "id": 1,
+      "quote": "The curious paradox is that when I accept myself just as I am, then I can change.",
+      "author": "Carl Rogers",
+      "category": "Self-Acceptance"
+    },
+    {
+      "id": 2,
+      "quote": "Until you make the unconscious conscious, it will direct your life and you will call it fate.",
+      "author": "Carl Jung",
+      "category": "Awareness"
+    },
+    {
+      "id": 3,
+      "quote": "Everything can be taken from a man but one thing: the last of the human freedoms—to choose one's attitude in any given set of circumstances.",
+      "author": "Viktor Frankl",
+      "category": "Resilience"
+    },
+    {
+      "id": 4,
+      "quote": "The privilege of a lifetime is to become who you truly are.",
+      "author": "Carl Jung",
+      "category": "Identity"
+    },
+    {
+      "id": 5,
+      "quote": "What we plant in our components of mind, nurtured by loss or gain, eventually yields its harvest.",
+      "author": "Unknown",
+      "category": "Mindfulness"
+    },
+    {
+      "id": 6,
+      "quote": "We are what we are because we have been what we have been.",
+      "author": "Sigmund Freud",
+      "category": "Development"
+    },
+    {
+      "id": 7,
+      "quote": "The good life is a process, not a state of being. It is a direction, not a destination.",
+      "author": "Carl Rogers",
+      "category": "Growth"
+    },
+    {
+      "id": 8,
+      "quote": "Emotional intelligence is the ability to sense, understand, and effectively apply the power and acumen of emotions.",
+      "author": "Daniel Goleman",
+      "category": "Emotional Intelligence"
+    },
+    {
+      "id": 9,
+      "quote": "Where danger is, there is also that which saves.",
+      "author": "Friedrich Hölderlin",
+      "category": "Hope"
+    },
+    {
+      "id": 10,
+      "quote": "Happiness is not a state to arrive at, but a manner of traveling.",
+      "author": "Margaret Lee Runbeck",
+      "category": "Perspective"
+    },
+    {
+      "id": 11,
+      "quote": "The most beautiful people we have known are those who have known defeat, known suffering, known struggle, known loss, and have found their way out of the depths.",
+      "author": "Elisabeth Kübler-Ross",
+      "category": "Resilience"
+    },
+    {
+      "id": 12,
+      "quote": "I am not what happened to me, I am what I choose to become.",
+      "author": "Carl Jung",
+      "category": "Empowerment"
+    },
+    {
+      "id": 13,
+      "quote": "The brain is wider than the sky.",
+      "author": "Emily Dickinson",
+      "category": "Cognition"
+    },
+    {
+      "id": 14,
+      "quote": "Out of your vulnerabilities will come your strength.",
+      "author": "Sigmund Freud",
+      "category": "Growth"
+    },
+    {
+      "id": 15,
+      "quote": "A man who as a physical being is always turned toward the outside, thinking that his happiness lies outside him.",
+      "author": "Søren Kierkegaard",
+      "category": "Introspection"
+    },
+    {
+      "id": 16,
+      "quote": "Human beings are drawn to be whole.",
+      "author": "Carl Jung",
+      "category": "Wholeness"
+    },
+    {
+      "id": 17,
+      "quote": "Don't be pushed around by the fears in your mind. Be led by the dreams in your heart.",
+      "author": "Roy T. Bennett",
+      "category": "Motivation"
+    },
+    {
+      "id": 18,
+      "quote": "Anxiety is the dizziness of freedom.",
+      "author": "Søren Kierkegaard",
+      "category": "Anxiety"
+    },
+    {
+      "id": 19,
+      "quote": "We don't see things as they are, we see them as we are.",
+      "author": "Anaïs Nin",
+      "category": "Perception"
+    },
+    {
+      "id": 20,
+      "quote": "The meeting of two personalities is like the contact of two chemical substances: if there is any reaction, both are transformed.",
+      "author": "Carl Jung",
+      "category": "Relationships"
+    },
+    {
+      "id": 21,
+      "quote": "The shoe that fits one person pinches another; there is no recipe for living that suits all cases.",
+      "author": "Carl Jung",
+      "category": "Individuality"
+    },
+    {
+      "id": 22,
+      "quote": "Trauma is a fact of life. It does not, however, have to be a life sentence.",
+      "author": "Peter A. Levine",
+      "category": "Healing"
+    },
+    {
+      "id": 23,
+      "quote": "Owning our story can be hard but not nearly as difficult as spending our lives running from it.",
+      "author": "Brené Brown",
+      "category": "Authenticity"
+    },
+    {
+      "id": 24,
+      "quote": "Even a happy life cannot be without a measure of darkness, and the word happy would lose its meaning if it were not balanced by sadness.",
+      "author": "Carl Jung",
+      "category": "Balance"
+    },
+    {
+      "id": 25,
+      "quote": "Between stimulus and response there is a space. In that space is our power to choose our response.",
+      "author": "Viktor Frankl",
+      "category": "Choice"
+    },
+    {
+      "id": 26,
+      "quote": "The pendulum of the mind alternates between sense and nonsense, not between right and wrong.",
+      "author": "Carl Jung",
+      "category": "Cognition"
+    },
+    {
+      "id": 27,
+      "quote": "Self-awareness is not just attention to behaviors, but an investigation of the soul.",
+      "author": "Unknown",
+      "category": "Self-Awareness"
+    },
+    {
+      "id": 28,
+      "quote": "One is small when one is born, one is small when one dies, but one is huge when one loves.",
+      "author": "Leo Buscaglia",
+      "category": "Connection"
+    },
+    {
+      "id": 29,
+      "quote": "The degree of one's emotion varies inversely with one's knowledge of the facts.",
+      "author": "Bertrand Russell",
+      "category": "Logic"
+    },
+    {
+      "id": 30,
+      "quote": "He who has a why to live can bear almost any how.",
+      "author": "Friedrich Nietzsche",
+      "category": "Purpose"
+    },
+    {
+      "id": 31,
+      "quote": "Insight occurs when, and only when, we stop trying to control.",
+      "author": "Stephen Levine",
+      "category": "Insight"
+    },
+    {
+      "id": 32,
+      "quote": "Mental health is not a destination, but a process. It's about how you drive, not where you're going.",
+      "author": "Noam Shpancer",
+      "category": "Mental Health"
+    },
+    {
+      "id": 33,
+      "quote": "To be normal is the ultimate aim of the unsuccessful.",
+      "author": "Carl Jung",
+      "category": "Individuality"
+    },
+    {
+      "id": 34,
+      "quote": "Whatever is mentioned can be managed.",
+      "author": "Fred Rogers",
+      "category": "Communication"
+    },
+    {
+      "id": 35,
+      "quote": "Your visions will become clear only when you can look into your own heart.",
+      "author": "Carl Jung",
+      "category": "Introspection"
+    },
+    {
+      "id": 36,
+      "quote": "Change is the only constant in life.",
+      "author": "Heraclitus",
+      "category": "Change"
+    },
+    {
+      "id": 37,
+      "quote": "It is not primarily our physical selves that limit us but rather our mindset about our physical limits.",
+      "author": "Ellen J. Langer",
+      "category": "Mindset"
+    },
+    {
+      "id": 38,
+      "quote": "Vulnerability is the birthplace of innovation, creativity and change.",
+      "author": "Brené Brown",
+      "category": "Vulnerability"
+    },
+    {
+      "id": 39,
+      "quote": "We are not broken, we are just learning how to handle our pieces.",
+      "author": "Unknown",
+      "category": "Healing"
+    },
+    {
+      "id": 40,
+      "quote": "To understand the heart and mind of a person, look not at what he has already achieved, but at what he aspires to.",
+      "author": "Kahlil Gibran",
+      "category": "Aspiration"
+    },
+    {
+      "id": 41,
+      "quote": "Experience is not what happens to you; it's what you do with what happens to you.",
+      "author": "Aldous Huxley",
+      "category": "Experience"
+    },
+    {
+      "id": 42,
+      "quote": "Knowledge is a weapon such that even its smallest portion can save your life.",
+      "author": "Unknown",
+      "category": "Knowledge"
+    },
+    {
+      "id": 43,
+      "quote": "The cave you fear to enter holds the treasure you seek.",
+      "author": "Joseph Campbell",
+      "category": "Fear"
+    },
+    {
+      "id": 44,
+      "quote": "Loneliness does not come from having no people about one, but from being unable to communicate the things that seem important to oneself.",
+      "author": "Carl Jung",
+      "category": "Loneliness"
+    },
+    {
+      "id": 45,
+      "quote": "Self-care is never a selfish act—it is simply good stewardship of the only gift I have.",
+      "author": "Parker Palmer",
+      "category": "Self-Care"
+    },
+    {
+      "id": 46,
+      "quote": "People don't care how much you know until they know how much you care.",
+      "author": "Theodore Roosevelt",
+      "category": "Empathy"
+    },
+    {
+      "id": 47,
+      "quote": "Success is not final, failure is not fatal: it is the courage to continue that counts.",
+      "author": "Winston Churchill",
+      "category": "Resilience"
+    },
+    {
+      "id": 48,
+      "quote": "We must never be afraid to go too far, for truth lies beyond.",
+      "author": "Marcel Proust",
+      "category": "Truth"
+    },
+    {
+      "id": 49,
+      "quote": "Healing takes time, and asking for help is a courageous step.",
+      "author": "Mariska Hargitay",
+      "category": "Healing"
+    },
+    {
+      "id": 50,
+      "quote": "The wound is the place where the Light enters you.",
+      "author": "Rumi",
+      "category": "Healing"
+    },
+    {
+      "id": 51,
+      "quote": "Be curious, not judgmental.",
+      "author": "Walt Whitman",
+      "category": "Mindfulness"
+    },
+    {
+      "id": 52,
+      "quote": "What is necessary to change a person is to change his awareness of himself.",
+      "author": "Abraham Maslow",
+      "category": "Growth"
+    },
+    {
+      "id": 53,
+      "quote": "One can choose to go back toward safety or forward toward growth.",
+      "author": "Abraham Maslow",
+      "category": "Growth"
+    },
+    {
+      "id": 54,
+      "quote": "The story of a human life is not just a collection of events; it's the interpretation of those events.",
+      "author": "Unknown",
+      "category": "Perspective"
+    },
+    {
+      "id": 55,
+      "quote": "The greatest discovery of my generation is that a human being can alter his life by altering his attitudes.",
+      "author": "William James",
+      "category": "Attitude"
+    },
+    {
+      "id": 56,
+      "quote": "When we are no longer able to change a situation, we are challenged to change ourselves.",
+      "author": "Viktor Frankl",
+      "category": "Change"
+    },
+    {
+      "id": 57,
+      "quote": "Life is 10% what happens to us and 90% how we react to it.",
+      "author": "Charles R. Swindoll",
+      "category": "Reaction"
+    },
+    {
+      "id": 58,
+      "quote": "The only way to do great work is to love what you do.",
+      "author": "Steve Jobs",
+      "category": "Passion"
+    },
+    {
+      "id": 59,
+      "quote": "Life doesn't make sense; we make sense of life.",
+      "author": "Unknown",
+      "category": "Meaning"
+    },
+    {
+      "id": 60,
+      "quote": "The truth will set you free, but first it will make you miserable.",
+      "author": "James Baldwin",
+      "category": "Truth"
+    },
+    {
+      "id": 61,
+      "quote": "A goal without a plan is just a wish.",
+      "author": "Antoine de Saint-Exupéry",
+      "category": "Planning"
+    },
+    {
+      "id": 62,
+      "quote": "We are what we repeatedly do. Excellence, then, is not an act, but a habit.",
+      "author": "Aristotle",
+      "category": "Habit"
+    },
+    {
+      "id": 63,
+      "quote": "In the middle of every difficulty lies opportunity.",
+      "author": "Albert Einstein",
+      "category": "Opportunity"
+    },
+    {
+      "id": 64,
+      "quote": "Forgiveness is not an occasional act, it is a constant attitude.",
+      "author": "Martin Luther King Jr.",
+      "category": "Forgiveness"
+    },
+    {
+      "id": 65,
+      "quote": "Connection is why we're here; it is what gives purpose and meaning to our lives.",
+      "author": "Brené Brown",
+      "category": "Connection"
+    },
+    {
+      "id": 66,
+      "quote": "The only person you are destined to become is the person you decide to be.",
+      "author": "Ralph Waldo Emerson",
+      "category": "Identity"
+    },
+    {
+      "id": 67,
+      "quote": "Your life is your message to the world. Make sure it's inspiring.",
+      "author": "Unknown",
+      "category": "Inspiration"
+    },
+    {
+      "id": 68,
+      "quote": "The way to get started is to quit talking and begin doing.",
+      "author": "Walt Disney",
+      "category": "Action"
+    },
+    {
+      "id": 69,
+      "quote": "The power of imagination makes us infinite.",
+      "author": "John Muir",
+      "category": "Imagination"
+    },
+    {
+      "id": 70,
+      "quote": "The best way to predict your future is to create it.",
+      "author": "Abraham Lincoln",
+      "category": "Future"
+    },
+    {
+      "id": 71,
+      "quote": "Everything you've ever wanted is on the other side of fear.",
+      "author": "George Addair",
+      "category": "Fear"
+    },
+    {
+      "id": 72,
+      "quote": "Small steps in the right direction can turn out to be the biggest steps of your life.",
+      "author": "Unknown",
+      "category": "Progress"
+    },
+    {
+      "id": 73,
+      "quote": "You can't pour from an empty cup.",
+      "author": "Unknown",
+      "category": "Self-Care"
+    },
+    {
+      "id": 74,
+      "quote": "Believing you can is half the battle.",
+      "author": "Theodore Roosevelt",
+      "category": "Belief"
+    },
+    {
+      "id": 75,
+      "quote": "Growth is painful. Change is painful. But nothing is as painful as staying stuck where you do not belong.",
+      "author": "N.R. Narayana Murthy",
+      "category": "Growth"
+    },
+    {
+      "id": 76,
+      "quote": "Empathy is simply listening, holding space, withholding judgment, emotionally connecting, and communicating that incredibly healing message of 'You're not alone.'",
+      "author": "Brené Brown",
+      "category": "Empathy"
+    },
+    {
+      "id": 77,
+      "quote": "The purpose of life is not to be happy. It is to be useful, to be honorable, to be compassionate.",
+      "author": "Ralph Waldo Emerson",
+      "category": "Purpose"
+    },
+    {
+      "id": 78,
+      "quote": "Act as if what you do makes a difference. It does.",
+      "author": "William James",
+      "category": "Impact"
+    },
+    {
+      "id": 79,
+      "quote": "Happiness is when what you think, what you say, and what you do are in harmony.",
+      "author": "Mahatma Gandhi",
+      "category": "Harmony"
+    },
+    {
+      "id": 80,
+      "quote": "Hardships often prepare ordinary people for an extraordinary destiny.",
+      "author": "C.S. Lewis",
+      "category": "Resilience"
+    },
+    {
+      "id": 81,
+      "quote": "Peace comes from within. Do not seek it without.",
+      "author": "Buddha",
+      "category": "Peace"
+    },
+    {
+      "id": 82,
+      "quote": "There is no greater agony than bearing an untold story inside you.",
+      "author": "Maya Angelou",
+      "category": "Expression"
+    },
+    {
+      "id": 83,
+      "quote": "Courage doesn't always roar. Sometimes courage is the quiet voice at the end of the day saying, 'I will try again tomorrow.'",
+      "author": "Mary Anne Radmacher",
+      "category": "Courage"
+    },
+    {
+      "id": 84,
+      "quote": "We are each our own devil, and we make this world our hell.",
+      "author": "Oscar Wilde",
+      "category": "Self-Reflection"
+    },
+    {
+      "id": 85,
+      "quote": "Comparison is the thief of joy.",
+      "author": "Theodore Roosevelt",
+      "category": "Comparison"
+    },
+    {
+      "id": 86,
+      "quote": "To live is the rarest thing in the world. Most people exist, that is all.",
+      "author": "Oscar Wilde",
+      "category": "Living"
+    },
+    {
+      "id": 87,
+      "quote": "Vulnerability is not winning or losing; it's having the courage to show up and be seen when we have no control over the outcome.",
+      "author": "Brené Brown",
+      "category": "Vulnerability"
+    },
+    {
+      "id": 88,
+      "quote": "The only limit to our realization of tomorrow will be our doubts of today.",
+      "author": "Franklin D. Roosevelt",
+      "category": "Doubt"
+    },
+    {
+      "id": 89,
+      "quote": "Sometimes you have to let go to see if there was anything worth holding on to.",
+      "author": "Unknown",
+      "category": "Letting Go"
+    },
+    {
+      "id": 90,
+      "quote": "Your task is not to seek for love, but merely to seek and find all the barriers within yourself that you have built against it.",
+      "author": "Rumi",
+      "category": "Love"
+    },
+    {
+      "id": 91,
+      "quote": "Perfectionism is a self-destructive and addictive belief system that fuels the primary thought: If I look perfect and do everything perfectly, I can avoid or minimize the painful feelings of shame, judgment, and blame.",
+      "author": "Brené Brown",
+      "category": "Perfectionism"
+    },
+    {
+      "id": 92,
+      "quote": "There is a crack in everything, that's how the light gets in.",
+      "author": "Leonard Cohen",
+      "category": "Imperfection"
+    },
+    {
+      "id": 93,
+      "quote": "Character is how you treat those who can do nothing for you.",
+      "author": "Johann Wolfgang von Goethe",
+      "category": "Character"
+    },
+    {
+      "id": 94,
+      "quote": "Do not let what you cannot do interfere with what you can do.",
+      "author": "John Wooden",
+      "category": "Capability"
+    },
+    {
+      "id": 95,
+      "quote": "The mind is its own place, and in itself can make a heaven of hell, a hell of heaven.",
+      "author": "John Milton",
+      "category": "Mindset"
+    },
+    {
+      "id": 96,
+      "quote": "It is not the mountain we conquer, but ourselves.",
+      "author": "Edmund Hillary",
+      "category": "Self-Mastery"
+    },
+    {
+      "id": 97,
+      "quote": "Focus on the journey, not the destination. Joy is found not in finishing an activity but in doing it.",
+      "author": "Greg Anderson",
+      "category": "Mindfulness"
+    },
+    {
+      "id": 98,
+      "quote": "The only normal people are the ones you don't know very well.",
+      "author": "Alfred Adler",
+      "category": "Individuality"
+    },
+    {
+      "id": 99,
+      "quote": "Self-compassion is simply giving the same kindness to ourselves that we would give to others.",
+      "author": "Christopher Germer",
+      "category": "Self-Compassion"
+    },
+    {
+      "id": 100,
+      "quote": "Deep listening is the kind of listening that can help relieve the suffering of another person.",
+      "author": "Thich Nhat Hanh",
+      "category": "Empathy"
+    }
+  ]
+}
+

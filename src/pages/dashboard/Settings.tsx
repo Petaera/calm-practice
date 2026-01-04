@@ -5,8 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, Lock, Bell, Download, Trash2, Shield, Clock, Calendar, DollarSign, Globe, Palette } from "lucide-react";
-import { useState, useEffect } from "react";
+import { User, Lock, Bell, Download, Trash2, Shield, Clock, Calendar, DollarSign, Globe, Palette, ChevronDown, ChevronUp } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -42,6 +42,14 @@ const Settings = () => {
   });
   const [selectedSpecializationIds, setSelectedSpecializationIds] = useState<string[]>([]);
   const [hasInitializedSpecializations, setHasInitializedSpecializations] = useState(false);
+  
+  // Collapsible section state
+  const [isProfileExpanded, setIsProfileExpanded] = useState(false);
+  
+  // Auto-save state
+  const [isSyncing, setIsSyncing] = useState(false);
+  const settingsInitialized = useRef(false);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Settings form state
   const [formData, setFormData] = useState<Partial<TherapistSettingsInsert>>({
@@ -126,6 +134,10 @@ const Settings = () => {
         working_hours_start: settings.working_hours_start || "09:00:00",
         working_hours_end: settings.working_hours_end || "17:00:00",
       });
+      // Mark settings as initialized after loading
+      setTimeout(() => {
+        settingsInitialized.current = true;
+      }, 100);
     }
   }, [settings]);
 
@@ -135,6 +147,29 @@ const Settings = () => {
       setFormData((prev) => ({ ...prev, therapist_id: therapist.id }));
     }
   }, [therapist?.id]);
+
+  // Auto-save settings when they change (after initialization)
+  useEffect(() => {
+    // Don't save if settings haven't been initialized yet
+    if (!settingsInitialized.current || !therapist?.id) return;
+
+    // Clear any pending save
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Debounce the save by 800ms
+    saveTimeoutRef.current = setTimeout(() => {
+      handleSaveSettings();
+    }, 800);
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [formData]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSaveProfile = async () => {
     if (!therapist?.id) {
@@ -194,27 +229,19 @@ const Settings = () => {
   };
 
   const handleSaveSettings = async () => {
-    if (!therapist?.id) {
-      toast({
-        title: "Error",
-        description: "Therapist ID is missing. Please try logging in again.",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (!therapist?.id) return;
 
     try {
+      setIsSyncing(true);
       await upsertSettings(formData as TherapistSettingsInsert);
-      toast({
-        title: "Settings saved",
-        description: "Your preferences have been updated successfully.",
-      });
     } catch (error) {
       toast({
-        title: "Error",
+        title: "Error syncing settings",
         description: "Failed to save settings. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -238,13 +265,12 @@ const Settings = () => {
           <h1 className="font-display text-3xl font-semibold text-foreground">Settings</h1>
           <p className="text-muted-foreground mt-1 text-lg">Manage your profile, preferences, and security.</p>
         </div>
-        <Button 
-          onClick={handleSaveSettings} 
-          disabled={isSaving}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl h-11"
-        >
-          {isSaving ? "Saving..." : "Save All Changes"}
-        </Button>
+        {isSyncing && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+            Syncing changes...
+          </div>
+        )}
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
@@ -252,12 +278,29 @@ const Settings = () => {
           {/* Profile Settings */}
           <Card className="border-none shadow-sm">
             <CardHeader className="border-b border-border/50 pb-4">
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                <User className="w-5 h-5 text-primary" /> Profile Information
-              </CardTitle>
-              <CardDescription>Your personal and clinical profile details.</CardDescription>
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    <User className="w-5 h-5 text-primary" /> Profile Information
+                  </CardTitle>
+                  <CardDescription>Your personal and clinical profile details.</CardDescription>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsProfileExpanded(!isProfileExpanded)}
+                  className="h-8 w-8 p-0"
+                >
+                  {isProfileExpanded ? (
+                    <ChevronUp className="w-5 h-5" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5" />
+                  )}
+                </Button>
+              </div>
             </CardHeader>
-            <CardContent className="pt-6 space-y-4">
+            {isProfileExpanded && (
+              <CardContent className="pt-6 space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
@@ -331,6 +374,7 @@ const Settings = () => {
                 Update Profile
               </Button>
             </CardContent>
+            )}
           </Card>
 
           {/* General Settings */}
@@ -755,21 +799,10 @@ const Settings = () => {
               </Button>
             </CardContent>
           </Card>
-        </div>
-      </div>
-
-      {/* Bottom Save Button */}
-      <div className="flex justify-end pt-4">
-        <Button 
-          onClick={handleSaveSettings} 
-          disabled={isSaving}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl h-11 px-8"
-        >
-          {isSaving ? "Saving..." : "Save All Changes"}
-        </Button>
-      </div>
-    </DashboardLayout>
-  );
-};
-
-export default Settings;
+         </div>
+       </div>
+     </DashboardLayout>
+   );
+ };
+ 
+ export default Settings;
