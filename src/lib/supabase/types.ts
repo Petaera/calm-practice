@@ -1200,6 +1200,8 @@ export type Database = {
           practice_name: string | null;
           specialization: string | null;
           updated_at: string | null;
+          terms_agreed: boolean | null;
+          privacy_agreed: boolean | null;
         };
         Insert: {
           created_at?: string | null;
@@ -1212,6 +1214,8 @@ export type Database = {
           practice_name?: string | null;
           specialization?: string | null;
           updated_at?: string | null;
+          terms_agreed?: boolean | null;
+          privacy_agreed?: boolean | null;
         };
         Update: {
           created_at?: string | null;
@@ -1224,6 +1228,8 @@ export type Database = {
           practice_name?: string | null;
           specialization?: string | null;
           updated_at?: string | null;
+          terms_agreed?: boolean | null;
+          privacy_agreed?: boolean | null;
         };
         Relationships: [];
       };

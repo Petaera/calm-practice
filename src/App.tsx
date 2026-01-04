@@ -23,6 +23,9 @@ import PublicAssessment from "./pages/PublicAssessment";
 import PublicModule from "./pages/PublicModule";
 import EmailVerification from "./pages/EmailVerification";
 import ResetPassword from "./pages/ResetPassword";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import Contact from "./pages/Contact";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +42,9 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/auth/verify" element={<EmailVerification />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/contact" element={<Contact />} />
             <Route path="/dashboard" element={<ProtectedRoute><Overview /></ProtectedRoute>} />
             <Route path="/dashboard/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
             <Route path="/dashboard/sessions" element={<ProtectedRoute><Sessions /></ProtectedRoute>} />

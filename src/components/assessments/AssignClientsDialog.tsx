@@ -144,11 +144,14 @@ export function AssignClientsDialog({
         title: "Clients Assigned",
         description: `${selectedClientIds.length} client(s) have been assigned to "${assessmentTitle}".`,
       });
-      // Refetch assigned clients to update the list immediately
-      await refetchAssignedClients();
-      // Call the parent callback to refetch assessments list
-      onAssigned?.();
+      // Close dialog first to prevent visual glitch during refetch
       handleClose();
+      // Refetch after dialog closes (non-blocking)
+      // Use requestAnimationFrame to ensure dialog is closed before refetch
+      requestAnimationFrame(() => {
+        refetchAssignedClients().catch(console.error);
+        onAssigned?.();
+      });
     } else if (assignClientsMutation.error) {
       toast({
         title: "Error",
@@ -168,7 +171,14 @@ export function AssignClientsDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+    <Dialog 
+      open={isOpen} 
+      onOpenChange={(open) => {
+        if (!open) {
+          handleClose();
+        }
+      }}
+    >
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

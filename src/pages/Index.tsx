@@ -2,7 +2,6 @@ import Header from "@/components/landing/Header";
 import Hero from "@/components/landing/Hero";
 import Stats from "@/components/landing/Stats";
 import Features from "@/components/landing/Features";
-// import ImageShowcase from "@/components/landing/ImageShowcase";
 import HowItWorks from "@/components/landing/HowItWorks";
 import Benefits from "@/components/landing/Benefits";
 import WhoItsFor from "@/components/landing/WhoItsFor";
@@ -20,7 +19,6 @@ const Index = () => {
         <Hero />
         <Stats />
         <Features />
-        {/* <ImageShowcase /> */}
         <HowItWorks />
         <Benefits />
         <WhoItsFor />

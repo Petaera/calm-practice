@@ -2,11 +2,17 @@ import { useState, useMemo, useEffect } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Clock, MapPin, Search, Plus, FileText, MoreVertical, Video, Edit, Trash2, CheckCircle, XCircle } from "lucide-react";
+import { Calendar, Clock, MapPin, Search, Plus, FileText, MoreVertical, Video, Edit, Trash2, CheckCircle, XCircle, CalendarIcon, ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useLocation, useNavigate } from "react-router-dom";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   useSessions,
   useCreateSession,
@@ -48,6 +54,74 @@ const generateSessionId = (): string => {
   return `${prefix}-${timestamp}-${random}`;
 };
 
+// Date filter preset types
+type DateFilterPreset = "today" | "yesterday" | "last7days" | "thisMonth" | "customDate" | "customRange";
+
+// Get date range for preset filters
+function getDateRangeForPreset(preset: DateFilterPreset, customStart?: string, customEnd?: string): { startDate?: string; endDate?: string } {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  switch (preset) {
+    case "today":
+      return {
+        startDate: today.toISOString().split("T")[0],
+        endDate: today.toISOString().split("T")[0],
+      };
+    
+    case "yesterday":
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      return {
+        startDate: yesterday.toISOString().split("T")[0],
+        endDate: yesterday.toISOString().split("T")[0],
+      };
+    
+    case "last7days":
+      const last7 = new Date(today);
+      last7.setDate(last7.getDate() - 7);
+      return {
+        startDate: last7.toISOString().split("T")[0],
+        endDate: today.toISOString().split("T")[0],
+      };
+    
+    case "thisMonth":
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      return {
+        startDate: startOfMonth.toISOString().split("T")[0],
+        endDate: today.toISOString().split("T")[0],
+      };
+    
+    case "customDate":
+      return {
+        startDate: customStart,
+        endDate: customStart, // Same date for single date filter
+      };
+    
+    case "customRange":
+      return {
+        startDate: customStart,
+        endDate: customEnd,
+      };
+    
+    default:
+      return {};
+  }
+}
+
+// Get display label for preset
+function getPresetLabel(preset: DateFilterPreset): string {
+  switch (preset) {
+    case "today": return "Today";
+    case "yesterday": return "Yesterday";
+    case "last7days": return "Last 7 Days";
+    case "thisMonth": return "This Month";
+    case "customDate": return "Custom Date";
+    case "customRange": return "Custom Range";
+    default: return "This Month";
+  }
+}
+
 const Sessions = () => {
   const { therapist } = useAuth();
   const { toast } = useToast();
@@ -64,6 +138,14 @@ const Sessions = () => {
   const [selectedSession, setSelectedSession] = useState<SessionWithClient | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState<SessionWithClient | null>(null);
+  
+  // Date filter state
+  const [dateFilterPreset, setDateFilterPreset] = useState<DateFilterPreset>("thisMonth");
+  const [customDate, setCustomDate] = useState<string>("");
+  const [customStartDate, setCustomStartDate] = useState<string>("");
+  const [customEndDate, setCustomEndDate] = useState<string>("");
+  const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
+  const [showCustomRangePicker, setShowCustomRangePicker] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -87,6 +169,38 @@ const Sessions = () => {
     );
   }, [location.pathname, location.search, navigate]);
 
+  // Auto-open popover when custom date/range preset is selected
+  useEffect(() => {
+    if (dateFilterPreset === "customDate" && !customDate) {
+      // Small delay to ensure the button is rendered
+      const timer = setTimeout(() => {
+        setShowCustomDatePicker(true);
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [dateFilterPreset, customDate]);
+
+  useEffect(() => {
+    if (dateFilterPreset === "customRange" && (!customStartDate || !customEndDate)) {
+      // Small delay to ensure the button is rendered
+      const timer = setTimeout(() => {
+        setShowCustomRangePicker(true);
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [dateFilterPreset, customStartDate, customEndDate]);
+
+  // Get date range based on filter
+  const dateFilter = useMemo(() => {
+    if (dateFilterPreset === "customDate") {
+      return getDateRangeForPreset(dateFilterPreset, customDate);
+    }
+    if (dateFilterPreset === "customRange") {
+      return getDateRangeForPreset(dateFilterPreset, customStartDate, customEndDate);
+    }
+    return getDateRangeForPreset(dateFilterPreset);
+  }, [dateFilterPreset, customDate, customStartDate, customEndDate]);
+
   // Data fetching
   const {
     data: sessionsData,
@@ -97,6 +211,8 @@ const Sessions = () => {
     pagination: { page: currentPage, pageSize: 10 },
     filters: {
       status: statusFilter,
+      dateFrom: dateFilter.startDate,
+      dateTo: dateFilter.endDate,
     },
     sort: { column: "session_date", ascending: false },
   });
@@ -113,23 +229,19 @@ const Sessions = () => {
   const completeSessionMutation = useCompleteSession();
   const cancelSessionMutation = useCancelSession();
 
-  // Calculate stats
+  // Calculate stats based on filtered sessions
   const stats = useMemo(() => {
     if (!sessionsData?.data) return { total: 0, thisMonth: 0, avgDuration: 0 };
     
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const filteredSessions = sessionsData.data;
+    // Use count from paginated response if available, otherwise use array length
+    const total = sessionsData.count ?? filteredSessions.length;
     
-    const thisMonthSessions = sessionsData.data.filter(s => {
-      const sessionDate = new Date(s.session_date);
-      return sessionDate >= startOfMonth;
-    });
-    
-    const avgDuration = thisMonthSessions.reduce((sum, s) => sum + (s.duration_minutes || 50), 0) / (thisMonthSessions.length || 1);
-    const totalHours = thisMonthSessions.reduce((sum, s) => sum + (s.duration_minutes || 50), 0) / 60;
+    const avgDuration = filteredSessions.reduce((sum, s) => sum + (s.duration_minutes || 50), 0) / (filteredSessions.length || 1);
+    const totalHours = filteredSessions.reduce((sum, s) => sum + (s.duration_minutes || 50), 0) / 60;
     
     return {
-      total: 142, // Mock total - would need separate query
+      total: total,
       thisMonth: totalHours.toFixed(1),
       avgDuration: Math.round(avgDuration),
     };
@@ -337,23 +449,193 @@ const Sessions = () => {
           <p className="text-muted-foreground mt-1 text-lg">Detailed history of all client encounters.</p>
         </div>
         
-        <SessionFormDialog
-          trigger={
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground flex gap-2 rounded-xl h-11 shadow-sm shadow-primary/20">
-              <Plus className="w-4 h-4" /> Log New Session
-            </Button>
-          }
-          open={isCreateDialogOpen}
-          onOpenChange={(open) => {
-            setIsCreateDialogOpen(open);
-            if (!open) setPrefillClientId(undefined);
-          }}
-          onSubmit={handleCreateSession}
-          isSubmitting={createSessionMutation.isLoading}
-          mode="create"
-          clients={clientsData?.data.map(c => ({ id: c.id, full_name: c.full_name })) || []}
-          initialData={prefillClientId ? { client_id: prefillClientId } : undefined}
-        />
+        <div className="flex items-center gap-2">
+          {/* Date Filter Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="rounded-xl h-11 flex gap-2 border-border shadow-sm">
+                <CalendarIcon className="w-4 h-4" />
+                {getPresetLabel(dateFilterPreset)}
+                <ChevronDown className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel>Date Filter</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  setDateFilterPreset("today");
+                  setShowCustomDatePicker(false);
+                  setShowCustomRangePicker(false);
+                }}
+                className={cn(dateFilterPreset === "today" && "bg-primary/10")}
+              >
+                Today
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setDateFilterPreset("yesterday");
+                  setShowCustomDatePicker(false);
+                  setShowCustomRangePicker(false);
+                }}
+                className={cn(dateFilterPreset === "yesterday" && "bg-primary/10")}
+              >
+                Yesterday
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setDateFilterPreset("last7days");
+                  setShowCustomDatePicker(false);
+                  setShowCustomRangePicker(false);
+                }}
+                className={cn(dateFilterPreset === "last7days" && "bg-primary/10")}
+              >
+                Last 7 Days
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setDateFilterPreset("thisMonth");
+                  setShowCustomDatePicker(false);
+                  setShowCustomRangePicker(false);
+                }}
+                className={cn(dateFilterPreset === "thisMonth" && "bg-primary/10")}
+              >
+                This Month
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDateFilterPreset("customDate");
+                  setShowCustomRangePicker(false);
+                  // Use requestAnimationFrame to ensure state updates after dropdown closes
+                  requestAnimationFrame(() => {
+                    setShowCustomDatePicker(true);
+                  });
+                }}
+                className={cn(dateFilterPreset === "customDate" && "bg-primary/10")}
+              >
+                Custom Date
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDateFilterPreset("customRange");
+                  setShowCustomDatePicker(false);
+                  // Use requestAnimationFrame to ensure state updates after dropdown closes
+                  requestAnimationFrame(() => {
+                    setShowCustomRangePicker(true);
+                  });
+                }}
+                className={cn(dateFilterPreset === "customRange" && "bg-primary/10")}
+              >
+                Custom Range
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Custom Date Picker */}
+          {dateFilterPreset === "customDate" && (
+            <Popover open={showCustomDatePicker} onOpenChange={setShowCustomDatePicker}>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="rounded-xl h-11 flex gap-2"
+                >
+                  <CalendarIcon className="w-4 h-4" />
+                  {customDate || "Select date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-4" align="end">
+                <div className="space-y-2">
+                  <Label>Select Date</Label>
+                  <Input
+                    type="date"
+                    value={customDate}
+                    onChange={(e) => {
+                      setCustomDate(e.target.value);
+                      if (e.target.value) {
+                        // Close popover after a short delay to allow the value to be set
+                        setTimeout(() => {
+                          setShowCustomDatePicker(false);
+                        }, 100);
+                      }
+                    }}
+                    className="rounded-xl"
+                  />
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
+
+          {/* Custom Range Picker */}
+          {dateFilterPreset === "customRange" && (
+            <Popover open={showCustomRangePicker} onOpenChange={setShowCustomRangePicker}>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="rounded-xl h-11 flex gap-2"
+                >
+                  <CalendarIcon className="w-4 h-4" />
+                  {customStartDate && customEndDate
+                    ? `${customStartDate} to ${customEndDate}`
+                    : "Select range"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-4" align="end">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Start Date</Label>
+                    <Input
+                      type="date"
+                      value={customStartDate}
+                      onChange={(e) => setCustomStartDate(e.target.value)}
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>End Date</Label>
+                    <Input
+                      type="date"
+                      value={customEndDate}
+                      onChange={(e) => setCustomEndDate(e.target.value)}
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <Button
+                    onClick={() => {
+                      if (customStartDate && customEndDate) {
+                        setShowCustomRangePicker(false);
+                      }
+                    }}
+                    className="w-full"
+                    disabled={!customStartDate || !customEndDate}
+                  >
+                    Apply
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
+          
+          <SessionFormDialog
+            trigger={
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground flex gap-2 rounded-xl h-11 shadow-sm shadow-primary/20">
+                <Plus className="w-4 h-4" /> Log New Session
+              </Button>
+            }
+            open={isCreateDialogOpen}
+            onOpenChange={(open) => {
+              setIsCreateDialogOpen(open);
+              if (!open) setPrefillClientId(undefined);
+            }}
+            onSubmit={handleCreateSession}
+            isSubmitting={createSessionMutation.isLoading}
+            mode="create"
+            clients={clientsData?.data.map(c => ({ id: c.id, full_name: c.full_name })) || []}
+            initialData={prefillClientId ? { client_id: prefillClientId } : undefined}
+          />
+        </div>
       </div>
 
       <div className="grid gap-6">

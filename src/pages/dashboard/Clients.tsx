@@ -411,16 +411,8 @@ const Clients = () => {
     }
   };
 
-  const handleStatusFilterChange = () => {
-    const statuses: (ClientStatus | undefined)[] = [
-      undefined,
-      "Active",
-      "On-hold",
-      "Closed",
-      "Inactive",
-    ];
-    const currentIndex = statuses.indexOf(statusFilter);
-    setStatusFilter(statuses[(currentIndex + 1) % statuses.length]);
+  const handleStatusFilterChange = (status: ClientStatus | undefined) => {
+    setStatusFilter(status);
     setCurrentPage(1);
   };
 
@@ -507,13 +499,50 @@ const Clients = () => {
           />
         </div>
         <div className="flex gap-2 w-full md:w-auto">
-          <Button
-            variant="outline"
-            className="flex gap-2 rounded-xl h-11 border-border shadow-sm flex-1 md:flex-none"
-            onClick={handleStatusFilterChange}
-          >
-            <Filter className="w-4 h-4" /> {statusFilter || "All"}
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="flex gap-2 rounded-xl h-11 border-border shadow-sm flex-1 md:flex-none"
+              >
+                <Filter className="w-4 h-4" /> {statusFilter || "All"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => handleStatusFilterChange(undefined)}
+                className={cn(!statusFilter && "bg-primary/10")}
+              >
+                All Clients
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleStatusFilterChange("Active")}
+                className={cn(statusFilter === "Active" && "bg-primary/10")}
+              >
+                Active
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleStatusFilterChange("On-hold")}
+                className={cn(statusFilter === "On-hold" && "bg-primary/10")}
+              >
+                On-hold
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleStatusFilterChange("Closed")}
+                className={cn(statusFilter === "Closed" && "bg-primary/10")}
+              >
+                Closed
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleStatusFilterChange("Inactive")}
+                className={cn(statusFilter === "Inactive" && "bg-primary/10")}
+              >
+                Inactive
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Badge
             variant="secondary"
             className="bg-primary/10 text-primary border-none flex items-center px-4 rounded-xl"

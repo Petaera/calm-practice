@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 const Footer = () => {
   return (
     <footer className="py-12 border-t border-border">
@@ -13,15 +15,15 @@ const Footer = () => {
           </div>
           
           <nav className="flex items-center gap-6 text-sm">
-            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
               Privacy Policy
-            </a>
-            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+            </Link>
+            <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
               Terms
-            </a>
-            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+            </Link>
+            <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
               Contact
-            </a>
+            </Link>
           </nav>
         </div>
         

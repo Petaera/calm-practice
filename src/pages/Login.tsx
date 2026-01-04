@@ -19,6 +19,7 @@ import Footer from "@/components/landing/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { updateTherapist } from "@/services/therapist.service";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -32,7 +33,9 @@ const Login = () => {
     password: "", 
     confirmPassword: "",
     practiceName: "",
-    specialization: ""
+    specialization: "",
+    termsAgreed: false,
+    privacyAgreed: false
   });
   
   const [isLoading, setIsLoading] = useState(false);
@@ -79,6 +82,17 @@ const Login = () => {
       return;
     }
 
+    // Validate terms and privacy agreement
+    if (!signupData.termsAgreed) {
+      setError("You must agree to the Terms of Service to create an account");
+      return;
+    }
+
+    if (!signupData.privacyAgreed) {
+      setError("You must agree to the Privacy Policy to create an account");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -93,6 +107,8 @@ const Login = () => {
             full_name: signupData.fullName,
             practice_name: signupData.practiceName || null,
             specialization: signupData.specialization || null,
+            terms_agreed: signupData.termsAgreed,
+            privacy_agreed: signupData.privacyAgreed,
           }
         }
       });
@@ -101,6 +117,68 @@ const Login = () => {
 
       if (!authData.user) {
         throw new Error("Failed to create user account");
+      }
+
+      // Update therapist record with terms and privacy agreement
+      // The trigger creates the therapist record, so we update it after
+      // Use user ID to match (therapist.id should match auth.users.id)
+      let retries = 5;
+      let updateSuccess = false;
+      
+      while (retries > 0 && !updateSuccess) {
+        // Wait a bit for the trigger to complete
+        if (retries < 5) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        
+        // First check if therapist record exists
+        // Use maybeSingle() instead of single() to avoid error when record doesn't exist
+        const { data: existingTherapist, error: checkError } = await supabase
+          .from("therapists")
+          .select("id, terms_agreed, privacy_agreed")
+          .eq("id", authData.user.id)
+          .maybeSingle();
+
+        if (checkError) {
+          // Any error other than "not found" is a real issue
+          console.warn(`Retry ${6 - retries}/5: Error checking therapist record:`, checkError);
+          retries--;
+          continue;
+        }
+
+        if (!existingTherapist) {
+          // Therapist record doesn't exist yet, wait and retry
+          console.log(`Retry ${6 - retries}/5: Therapist record not found yet, waiting...`);
+          retries--;
+          continue;
+        }
+
+        // Therapist record exists, now update it
+        // Explicitly convert to boolean to ensure true/false values
+        const result = await updateTherapist(authData.user.id, {
+          terms_agreed: Boolean(signupData.termsAgreed),
+          privacy_agreed: Boolean(signupData.privacyAgreed),
+        });
+
+        if (!result.error && result.data) {
+          updateSuccess = true;
+          console.log("Successfully updated therapist agreement:", {
+            terms_agreed: result.data.terms_agreed,
+            privacy_agreed: result.data.privacy_agreed,
+          });
+          break;
+        }
+        
+        if (result.error) {
+          console.warn(`Retry ${6 - retries}/5: Error updating therapist agreement:`, result.error);
+        }
+        
+        retries--;
+      }
+
+      if (!updateSuccess) {
+        console.error("Failed to update therapist agreement after all retries. User ID:", authData.user.id);
+        // Still show success to user, but log the error for debugging
       }
 
       toast({
@@ -359,21 +437,51 @@ const Login = () => {
                         className="h-11"
                       />
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      By signing up, you agree to our{" "}
-                      <a href="#" className="text-primary hover:underline">
-                        Terms of Service
-                      </a>{" "}
-                      and{" "}
-                      <a href="#" className="text-primary hover:underline">
-                        Privacy Policy
-                      </a>
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          id="terms-agreed"
+                          checked={signupData.termsAgreed}
+                          onChange={(e) =>
+                            setSignupData({ ...signupData, termsAgreed: e.target.checked })
+                          }
+                          required
+                          className="mt-1 rounded border-border"
+                          disabled={isLoading}
+                        />
+                        <label htmlFor="terms-agreed" className="text-sm text-muted-foreground cursor-pointer">
+                          I agree to the{" "}
+                          <a href="/terms" target="_blank" className="text-primary hover:underline">
+                            Terms of Service
+                          </a>
+                        </label>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          id="privacy-agreed"
+                          checked={signupData.privacyAgreed}
+                          onChange={(e) =>
+                            setSignupData({ ...signupData, privacyAgreed: e.target.checked })
+                          }
+                          required
+                          className="mt-1 rounded border-border"
+                          disabled={isLoading}
+                        />
+                        <label htmlFor="privacy-agreed" className="text-sm text-muted-foreground cursor-pointer">
+                          I agree to the{" "}
+                          <a href="/privacy" target="_blank" className="text-primary hover:underline">
+                            Privacy Policy
+                          </a>
+                        </label>
+                      </div>
                     </div>
                     <Button
                       type="submit"
                       className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-11 text-base"
                       size="lg"
-                      disabled={isLoading}
+                      disabled={isLoading || !signupData.termsAgreed || !signupData.privacyAgreed}
                     >
                       {isLoading ? (
                         <>
