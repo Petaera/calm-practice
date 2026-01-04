@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* PractoMind Design System - Calm, Professional Palette */
+/* PracMind Design System - Calm, Professional Palette */
 
 @layer base {
   :root {
@@ -55,49 +55,49 @@
   }
 
   .dark {
-    --background: 220 20% 10%;
-    --foreground: 40 20% 95%;
+    --background: 220 20% 8%;
+    --foreground: 40 15% 98%;
 
-    --card: 220 18% 14%;
-    --card-foreground: 40 20% 95%;
+    --card: 220 18% 12%;
+    --card-foreground: 40 15% 98%;
 
-    --popover: 220 18% 14%;
-    --popover-foreground: 40 20% 95%;
+    --popover: 220 18% 12%;
+    --popover-foreground: 40 15% 98%;
 
-    --primary: 152 35% 50%;
-    --primary-foreground: 220 20% 10%;
+    --primary: 152 40% 55%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 15% 18%;
-    --secondary-foreground: 40 20% 90%;
+    --secondary: 220 15% 16%;
+    --secondary-foreground: 40 15% 95%;
 
-    --muted: 220 15% 20%;
-    --muted-foreground: 40 15% 60%;
+    --muted: 220 15% 18%;
+    --muted-foreground: 40 10% 70%;
 
-    --accent: 205 45% 50%;
+    --accent: 205 50% 60%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 55% 45%;
+    --destructive: 0 60% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 22%;
-    --input: 220 15% 22%;
-    --ring: 152 35% 50%;
+    --border: 220 15% 20%;
+    --input: 220 15% 18%;
+    --ring: 152 40% 55%;
 
-    --sage: 152 35% 50%;
-    --sage-light: 152 25% 18%;
-    --sky: 205 45% 50%;
-    --sky-light: 205 35% 18%;
-    --warm-beige: 220 18% 12%;
-    --cream: 220 18% 14%;
+    --sage: 152 40% 55%;
+    --sage-light: 152 30% 22%;
+    --sky: 205 50% 60%;
+    --sky-light: 205 40% 22%;
+    --warm-beige: 220 18% 10%;
+    --cream: 220 18% 12%;
 
-    --sidebar-background: 220 18% 12%;
-    --sidebar-foreground: 40 20% 90%;
-    --sidebar-primary: 152 35% 50%;
-    --sidebar-primary-foreground: 220 20% 10%;
-    --sidebar-accent: 220 15% 18%;
-    --sidebar-accent-foreground: 40 20% 90%;
-    --sidebar-border: 220 15% 22%;
-    --sidebar-ring: 152 35% 50%;
+    --sidebar-background: 220 18% 10%;
+    --sidebar-foreground: 40 15% 95%;
+    --sidebar-primary: 152 40% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 15% 16%;
+    --sidebar-accent-foreground: 40 15% 95%;
+    --sidebar-border: 220 15% 20%;
+    --sidebar-ring: 152 40% 55%;
   }
 }
 
@@ -118,5 +118,87 @@
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+}
+
+/* Enhanced dark mode styles for better readability */
+@layer base {
+  .dark h1,
+  .dark h2,
+  .dark h3,
+  .dark h4,
+  .dark h5,
+  .dark h6 {
+    color: hsl(var(--foreground));
+    font-weight: 600;
+  }
+
+  .dark .font-display {
+    color: hsl(var(--foreground));
+  }
+
+  /* Ensure card titles are bright in dark mode */
+  .dark [class*="CardTitle"] {
+    color: hsl(var(--card-foreground));
+  }
+
+  /* Better contrast for labels in dark mode */
+  .dark label {
+    color: hsl(var(--foreground));
+    font-weight: 500;
+  }
+
+  /* Improve button contrast */
+  .dark button {
+    font-weight: 500;
+  }
+
+  /* Better input styling in dark mode */
+  .dark input,
+  .dark textarea,
+  .dark select {
+    background-color: hsl(var(--input));
+    border-color: hsl(var(--border));
+    color: hsl(var(--foreground));
+  }
+
+  .dark input:disabled,
+  .dark textarea:disabled,
+  .dark select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .dark input::placeholder,
+  .dark textarea::placeholder {
+    color: hsl(var(--muted-foreground));
+    opacity: 0.7;
+  }
+
+  /* Better dropdown/select styling */
+  .dark [role="combobox"],
+  .dark [role="listbox"] {
+    background-color: hsl(var(--popover));
+    border-color: hsl(var(--border));
+  }
+
+  /* Enhanced table readability */
+  .dark table {
+    border-color: hsl(var(--border));
+  }
+
+  .dark th {
+    color: hsl(var(--foreground));
+    font-weight: 600;
+  }
+
+  .dark td {
+    color: hsl(var(--foreground));
+  }
+
+  /* Better dialog/modal appearance */
+  .dark [role="dialog"] {
+    background-color: hsl(var(--card));
+    border-color: hsl(var(--border));
   }
 }

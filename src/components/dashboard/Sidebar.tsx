@@ -136,7 +136,7 @@ const Sidebar = () => {
       >
         <div className="p-6">
           <Link to="/" className="font-display text-2xl font-bold text-primary tracking-tight">
-            PractoMind
+            PracMind
           </Link>
           {therapist && (
             <p className="text-xs text-muted-foreground mt-2 truncate">

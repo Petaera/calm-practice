@@ -27,7 +27,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             </div>
           </div>
         </header>
-        <div className="flex-1 overflow-y-auto p-4 lg:p-8 bg-[#FAFAF9]">
+        <div className="flex-1 overflow-y-auto p-4 lg:p-8 bg-background">
           <div className="max-w-7xl mx-auto space-y-8 animate-fade-in">
             {children}
           </div>

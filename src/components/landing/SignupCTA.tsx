@@ -15,7 +15,7 @@ const SignupCTA = () => {
     // Simulate signup - replace with actual auth later
     setTimeout(() => {
       toast({
-        title: "Welcome to PractoMind!",
+        title: "Welcome to PracMind!",
         description: "We'll be in touch soon to get you started.",
       });
       setEmail("");
