@@ -64,7 +64,7 @@ export function useAssessmentsWithCounts(therapistId: string | undefined) {
     return getAssessmentsWithQuestionCounts(therapistId);
   }, [therapistId]);
 
-  return useSupabaseQuery<(Assessment & { question_count: number })[]>(
+  return useSupabaseQuery<(Assessment & { question_count: number; submission_count: number })[]>(
     queryFn,
     [therapistId],
     { enabled: !!therapistId }

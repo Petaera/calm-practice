@@ -85,9 +85,9 @@ const Assessments = () => {
     refetch,
   } = useAssessmentsWithCounts(therapist?.id);
 
-  const { 
-    data: expandedAssessmentData, 
-    refetch: refetchExpandedAssessment 
+  const {
+    data: expandedAssessmentData,
+    refetch: refetchExpandedAssessment
   } = useAssessment(expandedAssessmentId || undefined);
 
   const { data: libraryQuestions } = useLibraryQuestions(therapist?.id);
@@ -286,7 +286,7 @@ const Assessments = () => {
             Create and manage client assessments with shareable links.
           </p>
         </div>
-        
+
         <Button
           onClick={() => setIsCreateDialogOpen(true)}
           className="bg-primary hover:bg-primary/90 text-primary-foreground flex gap-2 rounded-xl h-11"
@@ -394,7 +394,7 @@ const Assessments = () => {
                 <div key={assessment.id}>
                   <AssessmentCard
                     assessment={assessment}
-                    submissionCount={0}
+                    submissionCount={assessment.submission_count ?? 0}
                     assignmentCount={0}
                     isExpanded={expandedAssessmentId === assessment.id}
                     onExpand={() => setExpandedAssessmentId(

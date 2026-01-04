@@ -99,16 +99,17 @@ export async function getAssessments(
 }
 
 /**
- * Fetch assessments with their question counts
+ * Fetch assessments with their question counts and submission counts
  */
 export async function getAssessmentsWithQuestionCounts(
   therapistId: string
-): Promise<ApiResponse<(Assessment & { question_count: number })[]>> {
+): Promise<ApiResponse<(Assessment & { question_count: number; submission_count: number })[]>> {
   const { data, error } = await supabase
     .from("assessments")
     .select(`
       *,
-      assessment_questions(count)
+      assessment_questions(count),
+      assessment_submissions(count)
     `)
     .eq("therapist_id", therapistId)
     .order("created_at", { ascending: false });
@@ -117,10 +118,11 @@ export async function getAssessmentsWithQuestionCounts(
     return { data: null, error: toApiError(error) };
   }
 
-  // Transform the response to include question_count
+  // Transform the response to include question_count and submission_count
   const assessmentsWithCounts = (data ?? []).map((assessment) => ({
     ...assessment,
     question_count: (assessment.assessment_questions as unknown as { count: number }[])?.[0]?.count ?? 0,
+    submission_count: (assessment.assessment_submissions as unknown as { count: number }[])?.[0]?.count ?? 0,
   }));
 
   return { data: assessmentsWithCounts, error: null };

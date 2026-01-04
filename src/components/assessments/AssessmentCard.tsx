@@ -34,7 +34,7 @@ import {
 import type { Assessment } from "@/lib/supabase/types";
 
 interface AssessmentCardProps {
-  assessment: Assessment & { question_count: number };
+  assessment: Assessment & { question_count: number; submission_count?: number };
   submissionCount?: number;
   assignmentCount?: number;
   isExpanded?: boolean;
@@ -102,7 +102,7 @@ export function AssessmentCard({
                 <h3 className="font-semibold text-base truncate">
                   {assessment.title}
                 </h3>
-                <Badge 
+                <Badge
                   variant={isActive ? "default" : "secondary"}
                   className={`text-xs ${isActive ? "bg-green-500/10 text-green-600 hover:bg-green-500/20" : ""}`}
                 >
