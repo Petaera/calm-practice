@@ -73,7 +73,7 @@ export function AssignClientsDialog({
   });
 
   // Fetch already assigned clients
-  const { data: assignedClients } = useAssignedClients(assessmentId);
+  const { data: assignedClients, refetch: refetchAssignedClients } = useAssignedClients(assessmentId);
 
   const assignClientsMutation = useAssignClients();
 
@@ -144,6 +144,9 @@ export function AssignClientsDialog({
         title: "Clients Assigned",
         description: `${selectedClientIds.length} client(s) have been assigned to "${assessmentTitle}".`,
       });
+      // Refetch assigned clients to update the list immediately
+      await refetchAssignedClients();
+      // Call the parent callback to refetch assessments list
       onAssigned?.();
       handleClose();
     } else if (assignClientsMutation.error) {

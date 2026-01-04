@@ -395,7 +395,7 @@ const Assessments = () => {
                   <AssessmentCard
                     assessment={assessment}
                     submissionCount={assessment.submission_count ?? 0}
-                    assignmentCount={0}
+                    assignmentCount={assessment.assignment_count ?? 0}
                     isExpanded={expandedAssessmentId === assessment.id}
                     onExpand={() => setExpandedAssessmentId(
                       expandedAssessmentId === assessment.id ? null : assessment.id

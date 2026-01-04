@@ -54,7 +54,7 @@ export function useAssessments(
 }
 
 /**
- * Hook to fetch assessments with question counts
+ * Hook to fetch assessments with question counts, submission counts, and assignment counts
  */
 export function useAssessmentsWithCounts(therapistId: string | undefined) {
   const queryFn = useCallback(() => {
@@ -64,7 +64,7 @@ export function useAssessmentsWithCounts(therapistId: string | undefined) {
     return getAssessmentsWithQuestionCounts(therapistId);
   }, [therapistId]);
 
-  return useSupabaseQuery<(Assessment & { question_count: number; submission_count: number })[]>(
+  return useSupabaseQuery<(Assessment & { question_count: number; submission_count: number; assignment_count: number })[]>(
     queryFn,
     [therapistId],
     { enabled: !!therapistId }
