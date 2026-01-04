@@ -1,6 +1,18 @@
 import Sidebar from "./Sidebar";
+import { useAuth } from "@/contexts/AuthContext";
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
+  const { therapist } = useAuth();
+  
+  const getInitials = (name: string | undefined) => {
+    if (!name) return "DR";
+    const names = name.split(" ");
+    if (names.length >= 2) {
+      return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+  
   return (
     <div className="flex min-h-screen bg-background text-foreground font-sans">
       <Sidebar />
@@ -11,7 +23,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
           </h2>
           <div className="flex items-center gap-4">
             <div className="w-8 h-8 rounded-full bg-sage flex items-center justify-center text-primary-foreground font-bold text-xs shadow-inner">
-              DR
+              {getInitials(therapist?.full_name)}
             </div>
           </div>
         </header>

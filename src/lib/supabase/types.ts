@@ -1419,6 +1419,10 @@ export type Therapist = Tables<"therapists">;
 export type TherapistInsert = TablesInsert<"therapists">;
 export type TherapistUpdate = TablesUpdate<"therapists">;
 
+export type TherapistSettings = Tables<"therapist_settings">;
+export type TherapistSettingsInsert = TablesInsert<"therapist_settings">;
+export type TherapistSettingsUpdate = TablesUpdate<"therapist_settings">;
+
 export type Client = Tables<"clients">;
 export type ClientInsert = TablesInsert<"clients">;
 export type ClientUpdate = TablesUpdate<"clients">;
